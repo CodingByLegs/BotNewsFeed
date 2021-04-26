@@ -1,6 +1,5 @@
 
 import json
-import os
 from datetime import datetime
 from telethon.tl.functions.messages import GetHistoryRequest
 from loader import client
