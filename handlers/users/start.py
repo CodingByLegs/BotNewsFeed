@@ -21,6 +21,8 @@ async def get_url(message: types.Message, state: FSMContext):
     data = MyData
     await bot.send_message(message.chat.id, data['key'] + " " + data['key2'])
 
+    # комментарий для коммита
+
 
 @dp.message_handler(state=Form.parse, content_types=types.ContentTypes.TEXT)
 async def parse(message: types.Message, state: FSMContext):
