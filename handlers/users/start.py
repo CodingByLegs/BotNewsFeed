@@ -4,7 +4,7 @@ from aiogram.dispatcher import FSMContext
 
 import json
 from Parser import parseURL, dump_all_messages
-from states.States import Form
+from states.States import Form, Test
 
 from loader import bot
 from loader import dp
