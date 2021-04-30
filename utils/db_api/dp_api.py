@@ -1,5 +1,5 @@
 from aiogram import types
-from asyncpg import Connection, Record
+from asyncpg import Connection
 from asyncpg.exceptions import UniqueViolationError
 
 from loader import db
@@ -48,6 +48,64 @@ class DBComands:
             await self.pool.fetchval(command, *args)
         except UniqueViolationError:
             pass
+
+    async def remove_channel_from_news_feed(self, channel_name):
+        user = types.User.get_current()
+        user_id = user.id
+        args = channel_name, user_id
+        command = self.REMOVE_CHANNEL_FROM_NEWS_FEED
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
+
+    async def get_news_channels(self):
+        user = types.User.get_current()
+        user_id = user.id
+        command = self.GET_NEWS_CHANNELS
+        return await self.pool.fetchval(command, user_id)
+
+    async def set_news_period(self, news_period):
+        user = types.User.get_current()
+        user_id = user.id
+        args = news_period, user_id
+        command = self.SET_NEWS_PERIOD
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
+
+    async def get_news_period(self):
+        user = types.User.get_current()
+        user_id = user.id
+        command = self.GET_NEWS_PERIOD
+        return await self.pool.fetchval(command, user_id)
+
+    async def add_new_category(self, category_name, isCustom):
+        user = types.User.get_current()
+        user_id = user.id
+        args = user_id, category_name, isCustom
+        command = self.ADD_NEW_CATEGORY
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
+
+    async def remove_category(self, category_name):
+        user = types.User.get_current()
+        user_id = user.id
+        args = user_id, category_name
+        command = self.REMOVE_CATEGORY
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
+
+    async def add_channel_to_category(self, category_name):
+        user = types.User.get_current()
+        user_id = user.id
+        args = category_name, user_id
+        command = self.ADD_CHANNEL_TO_CATEGORY
 
 
 db = DBComands()
