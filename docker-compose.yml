@@ -1,4 +1,4 @@
-version: '3'
+version: '3.1'
 services:
   redis:
     image: "redis"
@@ -7,4 +7,14 @@ services:
      - /utils/opt/redis/etc/redis.conf:/etc/redis.conf
     ports:
       - 6379:6379
+
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - /utils/database-data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5432:5432
 

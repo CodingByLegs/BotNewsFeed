@@ -5,7 +5,7 @@ env = Env()
 env.read_env()
 
 BOT_TOKEN = env.str("BOT_TOKEN")  # Забираем значение типа str
-ADMINS = { } # Тут у нас будет список из админов, ввести свой chat.id
+ADMINS = {738385786} # Тут у нас будет список из админов
 IP = env.str("ip")  # Тоже str, но для айпи адреса хоста
 PORT = env.str("port")
 API_ID = env.str("api_id")

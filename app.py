@@ -12,7 +12,6 @@ async def on_startup(dispatcher):
 
 
 async def on_shutdown(dp):
-    print("down")
     await dp.storage.close()
     await dp.storage.wait_closed()
 

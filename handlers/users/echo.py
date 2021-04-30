@@ -5,6 +5,8 @@ from loader import dp
 from loader import bot
 
 
+
+
 # # Эхо хендлер, куда летят текстовые сообщения без указанного состояния
 # @dp.message_handler(state=None)
 # async def bot_echo(message: types.Message):
@@ -15,12 +17,11 @@ from loader import bot
 #
 # # Эхо хендлер, куда летят ВСЕ сообщения с указанным состоянием
 # @dp.message_handler(state="*", content_types=types.ContentTypes.ANY)
-# async def bot_echo_all(message: types.Message, state: FSMContext):
-#     state = await state.get_state()
-#     await message.answer(f"Эхо в состоянии <code>{state}</code>.\n"
-#                          f"\nСодержание сообщения:\n"
-#                          f"<code>{message}</code>")
+# async def echo(message: types.Message):
+#     await bot.send_message(message.chat.id, message.text + "\n" + str(message.from_user.id) + "\n" + str(message.chat.id))
 
 @dp.message_handler()
 async def echo(message: types.Message):
     await bot.send_message(message.chat.id, message.text + "\n" + str(message.from_user.id) + "\n" + str(message.chat.id))
+
+
