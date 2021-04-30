@@ -12,7 +12,7 @@ from loader import dp
 @dp.message_handler(CommandStart(), state = "*")
 async def send_welcome(message: types.Message, state: FSMContext):
 
-    await message.reply("Hi!\nI'm EchoBot!\nPowered by aiogram.")
+    await message.reply("Привет, пользователь")
     await state.finish()
 
 
