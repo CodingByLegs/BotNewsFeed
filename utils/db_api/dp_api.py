@@ -25,10 +25,11 @@ class DBComands:
     REMOVE_CATEGORY = "DELETE FROM custom_categories WHERE user_id = $1 and category_name = $2"
     ADD_CHANNEL_TO_CATEGORY = "UPDATE custom_categories SET category_channels = " \
                               "array_append(category_channels, $1) " \
-                              "WHERE user_id = $2"
+                              "WHERE user_id = $2 AND category_name = $3"
     REMOVE_CHANNEL_FROM_CATEGORY = "UPDATE custom_categories SET category_channels = " \
                                    "array_remove(category_channels, $1) " \
-                                   "WHERE user_id = $2 "
+                                   "WHERE user_id = $2 AND category_name = $3 "
+
 
     async def add_new_user(self):
         user = types.User.get_current()
@@ -101,11 +102,24 @@ class DBComands:
         except UniqueViolationError:
             pass
 
-    async def add_channel_to_category(self, category_name):
+    async def add_channel_to_category(self, channel_name, category_name):
         user = types.User.get_current()
         user_id = user.id
-        args = category_name, user_id
+        args = channel_name, user_id, category_name
         command = self.ADD_CHANNEL_TO_CATEGORY
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
 
+    async def remove_channel_from_category(self, channel_name, category_name):
+        user = types.User.get_current()
+        user_id = user.id
+        args = channel_name, user_id, category_name
+        command = self.REMOVE_CHANNEL_FROM_CATEGORY
+        try:
+            await self.pool.fetchval(command, *args)
+        except UniqueViolationError:
+            pass
 
 db = DBComands()
