@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 
 from loader import dp
 from loader import bot
-
+from states.States import Form
 
 
 
@@ -20,7 +20,7 @@ from loader import bot
 # async def echo(message: types.Message):
 #     await bot.send_message(message.chat.id, message.text + "\n" + str(message.from_user.id) + "\n" + str(message.chat.id))
 
-@dp.message_handler()
+@dp.message_handler(state = Form.load)
 async def echo(message: types.Message):
     await bot.send_message(message.chat.id, message.text + "\n" + str(message.from_user.id) + "\n" + str(message.chat.id))
 
