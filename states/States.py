@@ -1,5 +1,10 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+class States_of_menu(StatesGroup):
+    menu = State()
+    categories = State()
+    test = State()
+
 
 class Form(StatesGroup):
     parse = State()

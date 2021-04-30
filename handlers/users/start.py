@@ -8,12 +8,12 @@ from states.States import Form, Test
 
 from loader import bot
 from loader import dp
-from utils.db_api.dp_api import db
+#from utils.db_api.dp_api import db
 
 
 @dp.message_handler(CommandStart(), state="*")
 async def send_welcome(message: types.Message, state: FSMContext):
-    await db.add_new_user()
+    #await db.add_new_user()
     await message.reply("Привет, пользователь")
     await state.finish()
 
@@ -51,7 +51,7 @@ async def addChanel(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.t1)
 async def setChannel(message: types.Message, state: FSMContext):
     channel = message.text
-    await db.add_channel_to_news_feed(channel)
+   #await db.add_channel_to_news_feed(channel)
     await bot.send_message(message.chat.id, "канал добавлен!")
     await state.finish()
 
@@ -66,7 +66,7 @@ async def addCategory(message: types.Message, state: FSMContext):
 async def setCategory(message: types.Message, state: FSMContext):
     isCustom = True
     category = message.text
-    await db.add_new_category(category, isCustom)
+    #await db.add_new_category(category, isCustom)
     await bot.send_message(message.chat.id, "Категория добавлена!")
     await state.finish()
 
@@ -79,7 +79,7 @@ async def addCategory(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.t5)
 async def removeCategory(message: types.Message, state: FSMContext):
     category = message.text
-    await db.remove_category(category)
+    #await db.remove_category(category)
     await bot.send_message(message.chat.id, "Категория удалена!")
     await state.finish()
 
@@ -92,20 +92,20 @@ async def addChanel1(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.t2)
 async def removeChannel(message: types.Message, state: FSMContext):
     channel = message.text
-    await db.remove_channel_from_news_feed(channel)
+    #await db.remove_channel_from_news_feed(channel)
     await bot.send_message(message.chat.id, "Канал удалён!")
     await state.finish()
 
 
 @dp.message_handler(commands=['Каналы'], state=None)
 async def getChannels(message: types.Message, state: FSMContext):
-    channels = await db.get_news_channels()
+    #channels = await db.get_news_channels()
     await bot.send_message(message.chat.id, channels)
 
 
 @dp.message_handler(commands=['Периоды'], state=None)
 async def getPeriod(message: types.Message, state: FSMContext):
-    period = await db.get_news_period()
+    #period = await db.get_news_period()
     await bot.send_message(message.chat.id, period)
 
 
@@ -118,7 +118,7 @@ async def addPeriod(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.t3)
 async def setPeriod(message: types.Message, state: FSMContext):
     period = int(message.text)
-    await db.set_news_period(period)
+    #await db.set_news_period(period)
     await bot.send_message(message.chat.id, "Период установлен!")
     await state.finish()
 
