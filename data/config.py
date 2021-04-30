@@ -11,4 +11,7 @@ PORT = env.str("port")
 API_ID = env.str("api_id")
 API_HASH = env.str("api_hash")
 USERNAME = env.str("username")
+PG_USER = env.str("pg_user")
+PG_PASS = env.str("pg_password")
+PG_IP = env.str("pg_ip")
 
