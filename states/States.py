@@ -1,8 +1,12 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-class States_of_menu(StatesGroup):
+class StatesOfMenu(StatesGroup):
     menu = State()
     categories = State()
+    list_of_feed_channels = State()
+    add_new_category = State()
+    my_categories = State()
+    editing_category = State()
     test = State()
 
 

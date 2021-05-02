@@ -18,3 +18,6 @@ button10 = types.KeyboardButton('Неделя')
 button11 = types.KeyboardButton('Месяц')
 button12 = types.KeyboardButton('Вернуться в меню')
 period_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button8, button9).row(button10, button11).add(button12)
+
+button13 = types.KeyboardButton('Вернуться в меню')
+back_to_menu_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).add(button13)
