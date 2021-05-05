@@ -10,6 +10,11 @@ class StatesOfMenu(StatesGroup):
     test = State()
 
 
+class NewsFeedStates(StatesGroup):
+    wait_link = State()
+
+
+
 class Form(StatesGroup):
     parse = State()
     load = State() 

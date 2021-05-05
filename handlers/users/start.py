@@ -8,12 +8,12 @@ from states.States import Form, Test
 
 from loader import bot
 from loader import dp
-#from utils.db_api.dp_api import db
+from utils.db_api.dp_api import db
 
 
 @dp.message_handler(CommandStart(), state="*")
 async def send_welcome(message: types.Message, state: FSMContext):
-    #await db.add_new_user()
+    await db.add_new_user()
     await message.reply("Привет, пользователь")
     await state.finish()
 
