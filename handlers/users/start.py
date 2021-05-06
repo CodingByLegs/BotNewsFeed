@@ -76,12 +76,14 @@ async def addCategory(message: types.Message, state: FSMContext):
     await Test.t5.set()
     await bot.send_message(message.chat.id, "Введите назавание категории")
 
+
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.t5)
 async def removeCategory(message: types.Message, state: FSMContext):
     category = message.text
     #await db.remove_category(category)
     await bot.send_message(message.chat.id, "Категория удалена!")
     await state.finish()
+
 
 @dp.message_handler(commands=['КаналУдалить'], state=None)
 async def addChanel1(message: types.Message, state: FSMContext):
@@ -122,6 +124,91 @@ async def setPeriod(message: types.Message, state: FSMContext):
     await bot.send_message(message.chat.id, "Период установлен!")
     await state.finish()
 
+
+@dp.message_handler(commands=['ДобавитьКанал'], state=None)
+async def addChanelIntoCategory1(message: types.Message, state: FSMContext):
+    await Test.tt1.set()
+    await bot.send_message(message.chat.id, "Введите название категории, в который хотите добавить канал")
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.tt1)
+async def addChanelIntoCategory2(message: types.Message, state: FSMContext):
+    await Test.tt2.set()
+    await state.update_data(category_name=message.text)
+    await bot.send_message(message.chat.id, "Введите канал, который хотите добавить в категорию: " + message.text)
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.tt2)
+async def addChanelIntoCategory3(message: types.Message, state: FSMContext):
+    tmp = await state.get_data()
+    category_name = tmp['category_name']
+    channel_name = message.text
+    await db.add_channel_to_category(channel_name, category_name)
+    await bot.send_message(message.chat.id, 'Канал успешно добавлен')
+    await state.finish()
+
+
+@dp.message_handler(commands=['УдалитьКанал'], state=None)
+async def removeChanelFromCategory1(message: types.Message, state: FSMContext):
+    await Test.ttt1.set()
+    await bot.send_message(message.chat.id, "Введите название категории, из которой вы хотите удалить канал")
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.ttt1)
+async def removeChanelFromCategory2(message: types.Message, state: FSMContext):
+    await Test.ttt2.set()
+    await state.update_data(category_name=message.text)
+    await bot.send_message(message.chat.id, "Введите канал, который хотите удалить из категории: " + message.text)
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=Test.ttt2)
+async def removeChanelFromCategory3(message: types.Message, state: FSMContext):
+    tmp = await state.get_data()
+    category_name = tmp['category_name']
+    channel_name = message.text
+    await db.remove_channel_from_category(channel_name, category_name)
+    await bot.send_message(message.chat.id, 'Канал успешно удалён')
+    await state.finish()
+
+
+@dp.message_handler(commands=['1'], state=None)
+async def getChannelsFromCategory(message: types.Message, state: FSMContext):
+    text = await db.get_category_channels('Тачки')
+    await bot.send_message(message.chat.id, text)
+
+@dp.message_handler(commands=['2'], state=None)
+async def getUserCategories(message: types.Message, state:FSMContext):
+    text = await db.get_user_categories()
+    await bot.send_message(message.chat.id, text)
+
+@dp.message_handler(commands=['3'], state=None)
+async def addOurCategory(message: types.Message, state:FSMContext):
+    category_name = 'Jopa'
+    category_channels = ['@dermo','@gavno']
+    await db.add_our_category(category_name,category_channels)
+
+@dp.message_handler(commands=['4'], state=None)
+async def addChannelsToOurCategory(message: types.Message, state:FSMContext):
+    category_name = 'Хуячки'
+    category_channels = ['@peins', '@jopa']
+    await db.add_channels_to_our_category(category_channels, category_name)
+
+@dp.message_handler(commands=['5'], state=None)
+async def addChannelsToOurCategory(message: types.Message, state:FSMContext):
+    category_name = 'Jopa'
+    category_channels = '@dermo'
+    await db.remove_channels_from_our_category(category_channels, category_name)
+
+@dp.message_handler(commands=['6'], state=None)
+async def getChannelsOurCategory(message: types.Message, state:FSMContext):
+    category_name = 'Jopa'
+    text = await db.get_our_category_channels(category_name)
+    await bot.send_message(message.chat.id, text)
+
+@dp.message_handler(commands=['7'], state=None)
+async def getChannelsOurCategory(message: types.Message, state:FSMContext):
+    text = await db.get_our_categories()
+    await bot.send_message(message.chat.id, text)
 
 async def loading(state: FSMContext):
     with open('channel_messages.json', 'r', encoding='utf-8') as json_file:

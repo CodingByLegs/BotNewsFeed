@@ -26,3 +26,8 @@ class Test(StatesGroup):
     t3 = State()
     t4 = State()
     t5 = State()
+    tt1 = State()
+    tt2 = State()
+    ttt1 = State()
+    ttt2 = State()
+
