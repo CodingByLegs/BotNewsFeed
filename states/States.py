@@ -4,10 +4,15 @@ class StatesOfMenu(StatesGroup):
     menu = State()
     categories = State()
     list_of_feed_channels = State()
-    add_new_category = State()
+    add_new_category_interring_name_of_category = State()
     my_categories = State()
     editing_category = State()
     test = State()
+
+
+class NewCategory(StatesGroup):
+    add_new_category_interring_name_of_channel = State()
+    Waiting = State()
 
 
 class NewsFeedStates(StatesGroup):

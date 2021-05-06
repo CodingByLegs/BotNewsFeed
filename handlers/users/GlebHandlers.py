@@ -3,7 +3,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from keyboards.default import KeyBoard
 from keyboards.inline import InlineKeyBoard
-from states.States import StatesOfMenu
+from states.States import StatesOfMenu, NewCategory
 from utils.db_api.dp_api import db
 
 
@@ -49,12 +49,13 @@ async def menu_choice(message: types.Message, state: FSMContext):
 async def categories_choice(message: types.Message, state: FSMContext):
     if message.text == "Мои категории":
         await bot.send_message(message.from_user.id, "Мои категории:", reply_markup=KeyBoard.back_to_menu_kb)
-        await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.my_categories_kb)
+        await bot.send_message(message.from_user.id, "Текст", reply_markup=await InlineKeyBoard.create_my_categories_kb())
         await StatesOfMenu.my_categories.set()
     elif message.text == "Создать категорию":
-        await bot.send_message(message.from_user.id, "Создать категорию:", reply_markup=KeyBoard.back_to_menu_kb)
-        await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.new_category_kb)
-        await StatesOfMenu.add_new_category.set()
+        # await bot.send_message(message.from_user.id, "Создать категорию:", reply_markup=KeyBoard.back_to_menu_kb)
+        # await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.new_category_kb)
+        await bot.send_message(message.from_user.id, "Введите название категории:", reply_markup=types.ReplyKeyboardRemove)
+        await StatesOfMenu.add_new_category_interring_name_of_category.set()
     elif message.text == "Редактирование категорий":
         await bot.send_message(message.from_user.id, "Редактирование категории:", reply_markup=KeyBoard.back_to_menu_kb)
         await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.editing_category_choice_kb)
@@ -66,6 +67,19 @@ async def categories_choice(message: types.Message, state: FSMContext):
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
+
+
+@dp.message_handler(state=StatesOfMenu.add_new_category_interring_name_of_category)
+async def add_new_category(message: types.Message, state: FSMContext):
+    category_name = message.text
+    await db.add_new_category(category_name, isCustom="True")
+    await bot.send_message(message.from_user.id, category_name, reply_markup=await InlineKeyBoard.create_creation_of_categories_kb())
+    await NewCategory.Waiting.set()
+    # if message.text == "Вернуться в меню":
+    #     await state.finish()
+    #     await StatesOfMenu.menu.set()
+    #     await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)

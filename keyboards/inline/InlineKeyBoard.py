@@ -1,7 +1,8 @@
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 
-from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback
+from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback, \
+    category_callback, special_action_callback, special_page_callback
 from utils.db_api.dp_api import db
 from loader import bot
 from loader import dp
@@ -85,162 +86,69 @@ async def delete_channel_from_news_feed_kb(channel: str, page):
     delete_channel_kb.row(button_yes, button_no)
     return delete_channel_kb
 
-new_category_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="⬅️", callback_data="back"),
-            InlineKeyboardButton(text="1️⃣", callback_data="none"),
-            InlineKeyboardButton(text="➡️", callback_data="forward"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 5", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 6", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 7", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 8", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️", callback_data="back"),
-            InlineKeyboardButton(text="1️⃣", callback_data="none"),
-            InlineKeyboardButton(text="➡️", callback_data="forward"),
-        ],
-        [
-            InlineKeyboardButton(text="Добавить новый канал", callback_data="add_new_channel"),
-        ],
-        [
-            InlineKeyboardButton(text="Сохранить категорию", callback_data="save"),
-        ]
-    ]
-)
 
-my_categories_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Наша категория 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 5", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 5", callback_data="ДОПИСАТЬ"),
-        ]
-    ]
-)
+async def create_my_categories_kb():
+    my_categories_our: list = await db.get_user_categories()
+    my_categories_not_our: list = await db.get_our_categories()
+    my_categories_kb = InlineKeyboardMarkup(row_width=1)
+    for category in my_categories_not_our:
+        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+        my_categories_kb.insert(inline_button)
+    for category in my_categories_our:
+        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+        my_categories_kb.insert(inline_button)
+    my_categories_kb.add(InlineKeyboardButton(text="Назад", callback_data="back"))
+    return my_categories_kb
 
-editing_category_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="⬅️", callback_data="back"),
-            InlineKeyboardButton(text="1️⃣", callback_data="none"),
-            InlineKeyboardButton(text="➡️", callback_data="forward"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 5", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 6", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 7", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Название кананала 8", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️", callback_data="back"),
-            InlineKeyboardButton(text="1️⃣", callback_data="none"),
-            InlineKeyboardButton(text="➡️", callback_data="forward"),
-        ],
-        [
-            InlineKeyboardButton(text="Добавить из своих каналов", callback_data="add_from_my_channels"),
-        ],
-        [
-            InlineKeyboardButton(text="Добавить новый канал", callback_data="add_new_channel_to_category"),
-        ]
-    ]
-)
 
-editing_category_choice_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Наша категория 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Наша категория 5", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 1", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 2", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 3", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 4", callback_data="ДОПИСАТЬ"),
-        ],
-        [
-            InlineKeyboardButton(text="Категория пользователя 5", callback_data="ДОПИСАТЬ"),
-        ]
-    ]
-)
+async def create_creation_of_categories_kb(category_name: str):
+    creation_of_categories_kb = InlineKeyboardMarkup(row_width=1)
+    button_pages1 = InlineKeyboardButton(text="⏺️ ", callback_data="none")
+    button_pages2 = InlineKeyboardButton(text=1, callback_data="none")
+    button_pages3 = InlineKeyboardButton(text="➡️",
+                                         callback_data=special_page_callback.new(page_number=1, rotation="forward",
+                                                                                   name_of_channel=category_name))
+    button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
+                                              callback_data=special_action_callback.new(action_name="add_new_channel",
+                                                                                        page=1,
+                                                                                        name_of_channel=category_name))
+    creation_of_categories_kb.row(button_pages1, button_pages2, button_pages3)
+    creation_of_categories_kb.add(button_add_channel)
+    return creation_of_categories_kb
+
+
+async def refresh_creation_of_categories_kb(page: int, category_name: str):
+    channels_of_category_name: list = await db.get_category_channels(category_name=category_name)
+    page = int(page)
+    channels_of_category_name = channels_of_category_name[8 * (page - 1)::]  # пропускаем по 8 страниц, которые вывели до этого
+    creation_of_categories_kb = InlineKeyboardMarkup(row_width=1)
+    count_of_channels = 0
+    for channel in channels_of_category_name:
+        count_of_channels += 1
+        # создаем кнопки с названием каналов и сразу добавляем их в клавиатуру
+        inline_button = InlineKeyboardButton(text=channel,
+                                             callback_data=channel_callback.new(channel_name=channel, page=page))
+        creation_of_categories_kb.insert(inline_button)
+        if count_of_channels == 8:  # не более 8 каналов на одной странице
+            break
+    if page > 1:
+        button_pages1 = InlineKeyboardButton(text="⬅️", callback_data=special_page_callback.new(page_number=page,
+                                             rotation="backward", name_of_channel=category_name))
+    else:
+        button_pages1 = InlineKeyboardButton(text="⏺️", callback_data="none")
+    button_pages2 = InlineKeyboardButton(text=page, callback_data="none")
+    if len(channels_of_category_name) > 8:
+        button_pages3 = InlineKeyboardButton(text="➡️",
+                                             callback_data=special_page_callback.new(page_number=page,
+                                                                                     rotation="forward",
+                                                                                     name_of_channel=category_name))
+    else:
+        button_pages3 = InlineKeyboardButton(text="⏺️",
+                                             callback_data="none")
+    button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
+                                              callback_data=special_action_callback.new(action_name="add_new_channel",
+                                                                                        page=page,
+                                                                                        name_of_channel=category_name))
+    channels_of_category_name.row(button_pages1, button_pages2, button_pages3)
+    channels_of_category_name.add(button_add_channel)
+    return channels_of_category_name
