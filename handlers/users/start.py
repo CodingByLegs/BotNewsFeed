@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher import FSMContext
@@ -5,16 +7,40 @@ from aiogram.dispatcher import FSMContext
 import json
 from Parser import parseURL, dump_all_messages
 from states.States import Form, Test
-
+from loader import client
 from loader import bot
 from loader import dp
 from utils.db_api.dp_api import db
-
+import pytz
 
 @dp.message_handler(CommandStart(), state="*")
 async def send_welcome(message: types.Message, state: FSMContext):
     await db.add_new_user()
     await message.reply("Привет, пользователь")
+    timzone = pytz.timezone('Europe/Moscow')
+    period = timedelta(minutes=1440)
+    date_period: datetime = datetime.utcnow() - period
+
+    messages = client.iter_messages(entity="https://t.me/csgomajor", limit=10, offset_date=date_period)
+
+    all_messages = []
+    class DateTimeEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, datetime):
+                return o.isoformat()
+            if isinstance(o, bytes):
+                return list(o)
+            return json.JSONEncoder.default(self, o)
+
+    async for message in messages:
+        if message.text != "":
+            new_message = {'message': message.text,
+                           'date': message.date,
+                           'message_id': message.id,
+                           'current': 'false'}
+            all_messages.append(new_message)
+    with open('channel_messages.json', 'w', encoding='utf8') as outfile:
+        json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
     await state.finish()
 
 
@@ -213,8 +239,9 @@ async def getChannelsOurCategory(message: types.Message, state:FSMContext):
 async def loading(state: FSMContext):
     with open('channel_messages.json', 'r', encoding='utf-8') as json_file:
         json_data = json.load(json_file)
+
         message_chid = await state.get_data()
-    for i in range(5):
+    for i in range(len(json_data)):
         await bot.send_message(message_chid['message_id'], json_data[i]['message'])
     await state.finish()
 

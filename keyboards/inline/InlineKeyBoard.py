@@ -1,7 +1,7 @@
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 
-from keyboards.inline.callback_dates import channel_callback, page_callback
+from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback
 from utils.db_api.dp_api import db
 from loader import bot
 from loader import dp
@@ -9,13 +9,13 @@ from loader import dp
 
 async def create_list_of_feed_channels_kb():
     list_of_channels: list = await db.get_news_channels()
-    print(list_of_channels)
     list_of_feed_channels_kb = InlineKeyboardMarkup(row_width=1)
     count_of_channels = 0
     for channel in list_of_channels:
         count_of_channels += 1
         # создаем кнопки с названием каналов и сразу добавляем их в клавиатуру
-        inline_button = InlineKeyboardButton(text=channel, callback_data=channel_callback.new(channel_name=channel))
+        inline_button = InlineKeyboardButton(text=channel,
+                                             callback_data=channel_callback.new(channel_name=channel, page=1))
         list_of_feed_channels_kb.insert(inline_button)
         if count_of_channels == 8:  # не более 8 каналов на одной странице
             break
@@ -27,7 +27,9 @@ async def create_list_of_feed_channels_kb():
     else:
         button_pages3 = InlineKeyboardButton(text="⏺️",
                                              callback_data="none")
-    button_add_channel = InlineKeyboardButton(text="Добавить новый канал", callback_data="add_new_channel")
+    button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
+                                              callback_data=action_callback.new(action_name="add_new_channel",
+                                                                                page=1))
     list_of_feed_channels_kb.row(button_pages1, button_pages2, button_pages3)
     list_of_feed_channels_kb.add(button_add_channel)
 
@@ -36,16 +38,15 @@ async def create_list_of_feed_channels_kb():
 
 async def refresh_list_of_feed_channels_kb(page: int):
     list_of_channels: list = await db.get_news_channels()
-    print(list_of_channels)
-    print(page)
+    page = int(page)
     list_of_channels = list_of_channels[8 * (page - 1)::]  # пропускаем по 8 страниц, которые вывели до этого
-    print(list_of_channels)
     list_of_feed_channels_kb = InlineKeyboardMarkup(row_width=1)
     count_of_channels = 0
     for channel in list_of_channels:
         count_of_channels += 1
         # создаем кнопки с названием каналов и сразу добавляем их в клавиатуру
-        inline_button = InlineKeyboardButton(text=channel, callback_data=channel_callback.new(channel_name=channel))
+        inline_button = InlineKeyboardButton(text=channel,
+                                             callback_data=channel_callback.new(channel_name=channel, page=page))
         list_of_feed_channels_kb.insert(inline_button)
         if count_of_channels == 8:  # не более 8 каналов на одной странице
             break
@@ -65,11 +66,24 @@ async def refresh_list_of_feed_channels_kb(page: int):
         button_pages3 = InlineKeyboardButton(text="⏺️",
                                              callback_data="none")
 
-    button_add_channel = InlineKeyboardButton(text="Добавить новый канал", callback_data="add_new_channel")
+    button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
+                                              callback_data=action_callback.new(action_name="add_new_channel",
+                                                                                page=page))
     list_of_feed_channels_kb.row(button_pages1, button_pages2, button_pages3)
     list_of_feed_channels_kb.add(button_add_channel)
     return list_of_feed_channels_kb
 
+
+async def delete_channel_from_news_feed_kb(channel: str, page):
+    delete_channel_kb = InlineKeyboardMarkup()
+    button_yes = InlineKeyboardButton(text="да", callback_data=delete_channel_callback.new(answer="yes",
+                                                                                           channel_name=channel,
+                                                                                           page=page))
+    button_no = InlineKeyboardButton(text="нет", callback_data=delete_channel_callback.new(answer="no",
+                                                                                           channel_name=channel,
+                                                                                           page=page))
+    delete_channel_kb.row(button_yes, button_no)
+    return delete_channel_kb
 
 new_category_kb = InlineKeyboardMarkup(
     inline_keyboard=[

@@ -44,6 +44,8 @@ class DBComands:
     GET_OUR_CATEGORY_CHANNELS = "SELECT category_channels FROM our_categories " \
                                 "WHERE category_name = $1"
     GET_OUR_CATEGORIES = "SELECT array_agg(category_name) FROM our_categories"
+
+
     async def add_new_user(self):
         user = types.User.get_current()
         user_id = user.id
@@ -179,4 +181,6 @@ class DBComands:
     async def get_our_categories(self):
         command = self.GET_OUR_CATEGORIES
         return await self.pool.fetchval(command)
+
+
 db = DBComands()

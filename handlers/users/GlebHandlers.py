@@ -12,7 +12,6 @@ async def welcome(message: types.Message, state: FSMContext):
     await state.finish()
     await bot.send_message(message.from_user.id, "Привет! (Дописать приветствие)", reply_markup=KeyBoard.start_kb)
     await db.add_new_user()
-    #await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
     await StatesOfMenu.menu.set()
 
 
