@@ -13,26 +13,27 @@ async def create_list_of_feed_channels_kb():
     list_of_channels: list = await db.get_news_channels()
     list_of_feed_channels_kb = InlineKeyboardMarkup(row_width=1)
     count_of_channels = 0
-    for channel in list_of_channels:
-        count_of_channels += 1
-        # создаем кнопки с названием каналов и сразу добавляем их в клавиатуру
-        inline_button = InlineKeyboardButton(text=channel,
-                                             callback_data=channel_callback.new(channel_name=channel, page=1))
-        list_of_feed_channels_kb.insert(inline_button)
-        if count_of_channels == 8:  # не более 8 каналов на одной странице
-            break
-    button_pages1 = InlineKeyboardButton(text="⏺️ ", callback_data="none")
-    button_pages2 = InlineKeyboardButton(text=1, callback_data="none")
-    if len(list_of_channels) > 8:
-        button_pages3 = InlineKeyboardButton(text="➡️",
-                                             callback_data=page_callback.new(page_number=1, rotation="forward"))
-    else:
-        button_pages3 = InlineKeyboardButton(text="⏺️",
-                                             callback_data="none")
+    if list_of_channels is not None:
+        for channel in list_of_channels:
+            count_of_channels += 1
+            # создаем кнопки с названием каналов и сразу добавляем их в клавиатуру
+            inline_button = InlineKeyboardButton(text=channel,
+                                                 callback_data=channel_callback.new(channel_name=channel, page=1))
+            list_of_feed_channels_kb.insert(inline_button)
+            if count_of_channels == 8:  # не более 8 каналов на одной странице
+                break
+        button_pages1 = InlineKeyboardButton(text="⏺️ ", callback_data="none")
+        button_pages2 = InlineKeyboardButton(text=1, callback_data="none")
+        if len(list_of_channels) > 8:
+            button_pages3 = InlineKeyboardButton(text="➡️",
+                                                 callback_data=page_callback.new(page_number=1, rotation="forward"))
+        else:
+            button_pages3 = InlineKeyboardButton(text="⏺️",
+                                                 callback_data="none")
+        list_of_feed_channels_kb.row(button_pages1, button_pages2, button_pages3)
     button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
                                               callback_data=action_callback.new(action_name="add_new_channel",
                                                                                 page=1))
-    list_of_feed_channels_kb.row(button_pages1, button_pages2, button_pages3)
     list_of_feed_channels_kb.add(button_add_channel)
 
     return list_of_feed_channels_kb
