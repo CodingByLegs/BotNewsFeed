@@ -20,7 +20,9 @@ async def get_link_for_news_feed_channel(call: CallbackQuery, state: FSMContext,
     await call.answer(cache_time=3)
     await call.message.answer("Введите ссылку на канал в формате t.me/название_канала")
     # запоминаем id сообщения с инлайн кнопками, чтобы поменять его, послое добавления нового канала
-    await state.update_data(message_id=call.message.message_id, page=callback_data.get("page"))
+    await state.update_data(message_id=call.message.message_id,
+                            page=callback_data.get("page"),
+                            chat_id=call.message.chat.id)
     await NewsFeedStates.wait_link.set()
 
 
@@ -43,7 +45,9 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
     state_data = await state.get_data()  # обновление инлайн клавиатуры
     message_id = state_data['message_id']
     page = state_data['page']
-    await bot.edit_message_reply_markup(message_id=message_id,
+    chat_id = state_data['chat_id']
+    await bot.edit_message_reply_markup(chat_id=chat_id,
+                                        message_id=message_id,
                                         reply_markup=await refresh_list_of_feed_channels_kb(page))
     await StatesOfMenu.list_of_feed_channels.set()
 

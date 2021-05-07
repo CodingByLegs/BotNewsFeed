@@ -54,7 +54,7 @@ async def categories_choice(message: types.Message, state: FSMContext):
     elif message.text == "Создать категорию":
         # await bot.send_message(message.from_user.id, "Создать категорию:", reply_markup=KeyBoard.back_to_menu_kb)
         # await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.new_category_kb)
-        await bot.send_message(message.from_user.id, "Введите название категории:", reply_markup=types.ReplyKeyboardRemove)
+        await bot.send_message(message.from_user.id, "Введите название категории:", reply_markup=types.ReplyKeyboardRemove())
         await StatesOfMenu.add_new_category_interring_name_of_category.set()
     elif message.text == "Редактирование категорий":
         await bot.send_message(message.from_user.id, "Редактирование категории:", reply_markup=KeyBoard.back_to_menu_kb)
@@ -73,7 +73,7 @@ async def categories_choice(message: types.Message, state: FSMContext):
 async def add_new_category(message: types.Message, state: FSMContext):
     category_name = message.text
     await db.add_new_category(category_name, isCustom="True")
-    await bot.send_message(message.from_user.id, category_name, reply_markup=await InlineKeyBoard.create_creation_of_categories_kb())
+    await bot.send_message(message.from_user.id, category_name, reply_markup=await InlineKeyBoard.create_creation_of_categories_kb(category_name))
     await NewCategory.Waiting.set()
     # if message.text == "Вернуться в меню":
     #     await state.finish()

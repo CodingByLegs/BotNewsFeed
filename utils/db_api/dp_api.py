@@ -3,6 +3,7 @@ from asyncpg import Connection
 from asyncpg.exceptions import UniqueViolationError
 
 from loader import db
+from utils.MyBool import MyBool
 
 
 class DBComands:
@@ -100,6 +101,7 @@ class DBComands:
     async def add_new_category(self, category_name, isCustom):
         user = types.User.get_current()
         user_id = user.id
+        isCustom = MyBool.str_to_bool(isCustom)
         args = user_id, category_name, isCustom
         command = self.ADD_NEW_CATEGORY
         try:

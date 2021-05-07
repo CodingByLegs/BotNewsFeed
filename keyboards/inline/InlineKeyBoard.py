@@ -1,3 +1,4 @@
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 
@@ -88,12 +89,13 @@ async def delete_channel_from_news_feed_kb(channel: str, page):
 
 
 async def create_my_categories_kb():
-    my_categories_our: list = await db.get_user_categories()
-    my_categories_not_our: list = await db.get_our_categories()
+    my_categories_custom: list = await db.get_user_categories()
+    my_categories_our: list = await db.get_our_categories()
     my_categories_kb = InlineKeyboardMarkup(row_width=1)
-    for category in my_categories_not_our:
-        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
-        my_categories_kb.insert(inline_button)
+    if my_categories_custom is not None:
+        for category in my_categories_custom:
+            inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+            my_categories_kb.insert(inline_button)
     for category in my_categories_our:
         inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
         my_categories_kb.insert(inline_button)
@@ -107,7 +109,7 @@ async def create_creation_of_categories_kb(category_name: str):
     button_pages2 = InlineKeyboardButton(text=1, callback_data="none")
     button_pages3 = InlineKeyboardButton(text="➡️",
                                          callback_data=special_page_callback.new(page_number=1, rotation="forward",
-                                                                                   name_of_channel=category_name))
+                                                                                 name_of_channel=category_name))
     button_add_channel = InlineKeyboardButton(text="Добавить новый канал",
                                               callback_data=special_action_callback.new(action_name="add_new_channel",
                                                                                         page=1,
@@ -149,6 +151,6 @@ async def refresh_creation_of_categories_kb(page: int, category_name: str):
                                               callback_data=special_action_callback.new(action_name="add_new_channel",
                                                                                         page=page,
                                                                                         name_of_channel=category_name))
-    channels_of_category_name.row(button_pages1, button_pages2, button_pages3)
-    channels_of_category_name.add(button_add_channel)
-    return channels_of_category_name
+    creation_of_categories_kb.row(button_pages1, button_pages2, button_pages3)
+    creation_of_categories_kb.add(button_add_channel)
+    return creation_of_categories_kb

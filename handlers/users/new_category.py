@@ -8,19 +8,22 @@ from aiogram.types import CallbackQuery, Message
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb,\
     refresh_creation_of_categories_kb
 from states.States import NewsFeedStates, StatesOfMenu, NewCategory
-from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback
+from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback, \
+    special_action_callback
 
 from loader import bot
 from loader import dp
 from utils.db_api.dp_api import db
 
 
-@dp.callback_query_handler(action_callback.filter(action_name="add_new_channel", ), state=NewCategory.Waiting)
+@dp.callback_query_handler(special_action_callback.filter(action_name="add_new_channel", ), state=NewCategory.Waiting)
 async def get_link(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await call.answer(cache_time=3)
     await call.message.answer("Введите ссылку на канал в формате t.me/название_канала")
-    await state.update_data(message_id=call.message.message_id, page=callback_data.get("page"),
-                            name_of_category=callback_data.get("name_of_channel"))
+    await state.update_data(message_id=call.message.message_id,
+                            page=callback_data.get("page"),
+                            name_of_category=callback_data.get("name_of_channel"),
+                            chat_id=call.message.chat.id)
     await NewCategory.add_new_category_interring_name_of_channel.set()
 
 
@@ -34,17 +37,19 @@ async def add_channel(message: Message, state: FSMContext):
     else:
         pass
     state_data = await state.get_data()
-    await db.add_channel_to_category(channel_name, category_name=state_data['name_of_channel'])
+    await db.add_channel_to_category(channel_name, category_name=state_data['name_of_category'])
     await message.answer("Канал был добавлен!")
     await bot.delete_message(message.chat.id, message.message_id - 1)
     await bot.delete_message(message.chat.id, message.message_id)
     await asyncio.sleep(2)
     await bot.delete_message(message.chat.id, message.message_id + 1)
     message_id = state_data['message_id']
+    chat_id = state_data['chat_id']
     page = state_data['page']
     await bot.edit_message_reply_markup(
+        chat_id=chat_id,
         message_id=message_id,
-        reply_markup=await refresh_creation_of_categories_kb(page, state_data['name_of_channel']))
+        reply_markup=await refresh_creation_of_categories_kb(page, state_data['name_of_category']))
     await NewCategory.Waiting.set()
 
 
