@@ -59,7 +59,7 @@ async def dump_all_messages(channel):
             will_parse_flag = True
 
     if will_parse_flag:
-        limit_msg = 100  # максимальное число записей, передаваемых за один раз
+        limit_msg = 21  # максимальное число записей, передаваемых за один раз
         all_messages = []  # список всех сообщений
 
         #period = timedelta(minutes=db.get_news_period())
@@ -108,7 +108,6 @@ async def dump_all_messages(channel):
         # создание директории и запись json файла
         with open(path_to_json_file, 'w', encoding='utf8') as outfile:
             json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
-
 
 
 async def parseURL(url):
