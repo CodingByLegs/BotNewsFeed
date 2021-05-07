@@ -13,9 +13,6 @@ from utils.MyBool import MyBool
 from utils.MyDataJSON import MyDataJSON
 from utils.db_api.dp_api import db
 
-# Присваиваем значения внутренним переменным
-
-
 
 async def dump_all_messages(channel):
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
@@ -64,7 +61,7 @@ async def dump_all_messages(channel):
         all_messages = []  # список всех сообщений
 
         #period = timedelta(minutes=db.get_news_period())
-        period = timedelta(hours=24)
+        period = timedelta(minutes=24*60)
         date_period: datetime = datetime.now(tz=timzone) - period
         print(date_period)
         messages = client.iter_messages(entity=channel, limit=1, offset_date=date_period)
@@ -111,11 +108,14 @@ async def dump_all_messages(channel):
             json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
 
 
-async def dump_news_feed():
+async def dump_news(category_name=None):
     user = types.User.get_current()
     all_news: list = []
     user_id = user.id
-    channels: list = await db.get_news_channels()
+    if category_name is None:
+        channels: list = await db.get_news_channels()
+    else:
+        channels: list = await db.get_category_channels(category_name)
     count_of_channels = len(channels)
     dot_json_str = '.json'
     path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
@@ -156,6 +156,8 @@ async def dump_news_feed():
     all_news.append(dict(lost_news=lost_news))  # записываем в конец списка словарь со сзначением кол-ва
     # пропущенных новостей
     return all_news
+
+
 
 
 async def parseURL(url):
