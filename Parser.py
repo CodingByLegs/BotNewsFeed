@@ -1,3 +1,4 @@
+import math
 import os
 import json
 from datetime import datetime
@@ -48,13 +49,10 @@ async def dump_all_messages(channel):
             json_data = json.load(json_file)
             json_data_length = len(json_data)
             if json_data_length != 0:
-                i = 0
-                while i < json_data_length:
-                    if json_data[i]['current']:
-                        # если сообщений до конца файла меньше, чем барьер, то поднимаем флаг на репарсинг
-                        if json_data_length - i < barrier_to_reparse_channel_count_messages:
-                            will_parse_flag = True
-                last_news_date = MyDataJSON(json_data[i - 1]['date'])  # подхватываем дату последней новости из json файла
+                # если сообщений до конца файла меньше, чем барьер, то поднимаем флаг на репарсинг
+                if json_data_length < barrier_to_reparse_channel_count_messages:
+                    will_parse_flag = True
+                last_news_date = MyDataJSON(json_data[0]['date'])  # подхватываем дату последней новости из json файла
                 date_different = date_now - last_news_date.date  # находим разницу по времени
                 if date_different < barrier_to_reparse_channel_last_news_time:
                     will_parse_flag = True
@@ -62,11 +60,11 @@ async def dump_all_messages(channel):
                 will_parse_flag = True
 
     if will_parse_flag:
-        limit_msg = 21  # максимальное число записей, передаваемых за один раз
+        limit_msg = 3  # максимальное число записей, передаваемых за один раз
         all_messages = []  # список всех сообщений
 
         #period = timedelta(minutes=db.get_news_period())
-        period = timedelta(minutes=1440*5)
+        period = timedelta(minutes=60*4)
         date_period: datetime = datetime.now(tz=timzone) - period
         print(date_period)
         messages = client.iter_messages(entity=channel, limit=1, offset_date=date_period)
@@ -111,6 +109,53 @@ async def dump_all_messages(channel):
         # создание директории и запись json файла
         with open(path_to_json_file, 'w', encoding='utf8') as outfile:
             json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
+
+
+async def dump_news_feed():
+    user = types.User.get_current()
+    all_news: list = []
+    user_id = user.id
+    channels: list = await db.get_news_channels()
+    count_of_channels = len(channels)
+    dot_json_str = '.json'
+    path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
+    news_per_dump = 20  # кол-во сообщений для единоразовго отображения
+    news_from_one_channel = math.trunc(news_per_dump / count_of_channels)  # округляем вниз
+    lost_news = news_per_dump % news_from_one_channel  # если кол-во каналов пользователя не кратно 20 + защита,
+    # если число каналов пользователя >20
+    for channel in channels:
+        link_channel_to_parse = "https://t.me/" + channel
+        await dump_all_messages(link_channel_to_parse)  # репариснг канала перед выводом
+        current_path = path_to_user_directory + channel + dot_json_str
+        with open(current_path, 'r', encoding='utf-8') as json_file:
+            json_data: list = json.load(json_file)
+            json_data_length = len(json_data)
+            i = json_data_length - 1
+            message_read = 0
+            # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
+            while i > -1 and json_data_length - 1 - i != news_from_one_channel:
+                message_read += 1
+                i -= 1
+                news = dict(message=json_data[i]['message'],
+                            date=json_data[i]['date'])
+                all_news.append(news)
+                json_data.pop()  # удаляем последний элемент списка, тот, который только что добавили
+            if message_read == news_from_one_channel:  # если прочитали все сообщения, то проверяем
+                if lost_news and len(json_data):  # если есть "потерянные" сообщения и в текущем файле еще есть
+                    # сообщения, если есть, то берем одно и добираем в итоговый список
+                    news = dict(message=json_data[i]['message'],
+                                date=json_data[i]['date'])
+                    all_news.append(news)
+                    json_data.pop()
+                    lost_news -= 1
+            else:
+                lost_news += news_from_one_channel - message_read  # если из текущего канала были считаны все нововсти
+                # но их кол-во <news_from_one_channel, то пропущенные сообщения добавим к lost_news
+        with open(current_path, 'w', encoding='utf-8') as json_file:
+            json.dump(json_data, json_file, ensure_ascii=False, indent=4)   # обновляем json файл после изъятия новостей
+    all_news.append(dict(lost_news=lost_news))  # записываем в конец списка словарь со сзначением кол-ва
+    # пропущенных новостей
+    return all_news
 
 
 async def parseURL(url):

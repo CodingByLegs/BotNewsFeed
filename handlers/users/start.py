@@ -5,11 +5,12 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher import FSMContext
 
 import json
-from Parser import parseURL, dump_all_messages
+from Parser import parseURL, dump_all_messages, dump_news_feed
 from states.States import Form, Test
 from loader import client
 from loader import bot
 from loader import dp
+from utils.MyDataJSON import MyDataJSON
 from utils.db_api.dp_api import db
 import pytz
 
@@ -42,6 +43,17 @@ async def send_welcome(message: types.Message, state: FSMContext):
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
     await state.finish()
+
+
+@dp.message_handler(commands=['Лента'], state=None)
+async def show_news_feed(message: types.Message):
+    news_feed_messages: list = await dump_news_feed()
+    for news in news_feed_messages:
+        news_date = MyDataJSON(news['date']).date
+        date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.min}\n'''
+        # date_to_send = f'''{news_date.day}.{news_date.month}\n{news_date.hour}:{news_date.min}\n'''
+        news_message: str = date_to_send + news['message']
+        await bot.send_message(message.chat.id, news_message)
 
 
 @dp.message_handler(commands=['Новости'], state=None)
