@@ -37,7 +37,7 @@ async def dump_all_messages(channel):
     # создаем путь к каналу, которой будем парсить
     path_channel_name = f'''channel_messages_{channel_name}.json'''
     # объединяем в общий путь к файлу с названием канала
-    path_to_json_file =  path_json_user_channels + '/' + path_channel_name
+    path_to_json_file = path_json_user_channels + '/' + path_channel_name
     # ищем файл с названием канала в директории path_json_user_channels
     if list_of_user_channels.count(path_channel_name):
         will_parse_flag = False
@@ -49,7 +49,7 @@ async def dump_all_messages(channel):
             json_data_length = len(json_data)
             i = 0
             while i < json_data_length:
-                if MyBool.str_to_bool(json_data[i]['current']):
+                if json_data[i]['current']:
                     # если сообщений до конца файла меньше, чем барьер, то поднимаем флаг на репарсинг
                     if json_data_length - i < barrier_to_reparse_channel_count_messages:
                         will_parse_flag = True
@@ -87,17 +87,17 @@ async def dump_all_messages(channel):
             if message.text != "":
                 if not flag:  # плднимаем флаг для первого подходящего сообщения и делаем его "текущим последним"
                     current_last_message = message
-                    is_current = 'true'
+                    is_current = True
                     flag = True
                 else:  # если нашли еще одно сообщение
-                    is_current = 'false'  # делаем его не последним
+                    is_current = False  # делаем его не последним
                     new_message = {'message': current_last_message.text,
                                    'date': current_last_message.date,
                                    'message_id': current_last_message.id,
                                    'current': is_current}
                     all_messages.append(new_message)  # и добавляем в all_messages
                     current_last_message = message  # новое пришедшее сообщение делаем текущим
-                    is_current = 'true'
+                    is_current = True
         # после выхода из цикла добавляем последнее сообщение, которе явялется текущим (is_current = True)
         if flag:  # если новости - только картинки, то сюда не зайдем
             new_message = {'message': current_last_message.text,
@@ -108,6 +108,7 @@ async def dump_all_messages(channel):
         # создание директории и запись json файла
         with open(path_to_json_file, 'w', encoding='utf8') as outfile:
             json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
+
 
 
 async def parseURL(url):
