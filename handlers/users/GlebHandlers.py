@@ -1,9 +1,11 @@
+from Parser import dump_news
 from loader import bot, dp
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from keyboards.default import KeyBoard
 from keyboards.inline import InlineKeyBoard
 from states.States import StatesOfMenu, NewCategory
+from utils.MyDataJSON import MyDataJSON
 from utils.db_api.dp_api import db
 
 
@@ -39,7 +41,17 @@ async def menu_choice(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, "Текст", reply_markup= await InlineKeyBoard.create_list_of_feed_channels_kb())
         await StatesOfMenu.list_of_feed_channels.set()
     elif message.text == "Вывести новостную ленту":
-        pass
+        news_feed_messages: list = await dump_news()
+        news_feed_messages_length = len(news_feed_messages)
+        lost_news = news_feed_messages[news_feed_messages_length - 1]['lost_news']
+        news_feed_messages.pop(news_feed_messages_length - 1)
+        print(lost_news)
+        for news in news_feed_messages:
+            news_date = MyDataJSON(news['date']).date
+            # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
+            date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
+            news_message: str = date_to_send + news['message']
+            await bot.send_message(message.chat.id, news_message)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
