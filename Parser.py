@@ -31,7 +31,7 @@ async def dump_all_messages(channel):
     elif channel.startswith("t.me/"):
         channel_name = channel.partition("t.me/")[2]
     # создаем директорию для поиска json файлов пользователя
-    path_json_user_channels = f'''jsonfiles/{user_id}.json'''
+    path_json_user_channels = f'''jsonfiles/{user_id}'''
     # получаем список файлов этой директории
     list_of_user_channels: list = os.listdir(path_json_user_channels)
     # создаем путь к каналу, которой будем парсить
@@ -108,7 +108,6 @@ async def dump_all_messages(channel):
         # создание директории и запись json файла
         with open(path_to_json_file, 'w', encoding='utf8') as outfile:
             json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
-
 
 
 async def parseURL(url):
