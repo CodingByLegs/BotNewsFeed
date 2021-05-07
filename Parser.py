@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 
 import pytz
+from aiogram import types
 from telethon.tl.functions.messages import GetHistoryRequest
 from datetime import timedelta
 
@@ -22,7 +23,7 @@ async def dump_all_messages(channel):
     total_count_limit = 1  # поменяйте это значение, если вам нужны не все сообщения
     timzone = pytz.timezone('Europe/Moscow')
     #period = timedelta(minutes=db.get_news_period())
-    period = timedelta(minutes=1440*4)
+    period = timedelta(minutes=1440*5)
     date_period: datetime = datetime.now(tz=timzone) - period
     print(date_period)
     messages = client.iter_messages(entity=channel, limit=1, offset_date=date_period)
@@ -42,17 +43,29 @@ async def dump_all_messages(channel):
                 return list(o)
             return json.JSONEncoder.default(self, o)
 
+    flag = False
     async for message in messages:
         if message.text != "":
-            if message.id != last_msg_id:
-                is_current = 'false'
-            else:
+            if not flag:  # плднимаем флаг для первого подходящего сообщения и делаем его "текущим последним"
+                current_last_message = message
                 is_current = 'true'
-            new_message = {'message': message.text,
-                           'date': message.date,
-                           'message_id': message.id,
-                           'current': is_current}
-            all_messages.append(new_message)
+                flag = True
+            else:  # если нашли еще одно сообщение
+                is_current = 'false'  # делаем его не последним
+                new_message = {'message': current_last_message.text,
+                               'date': current_last_message.date,
+                               'message_id': current_last_message.id,
+                               'current': is_current}
+                all_messages.append(new_message)  # и добавляем в all_messages
+                current_last_message = message  # новое пришедшее сообщение делаем текущим
+                is_current = 'true'
+    # после выхода из цикла добавляем последнее сообщение, которе явялется текущим (is_current = True)
+    if flag:  # если новости - только картинки, то сюда не зайдем
+        new_message = {'message': current_last_message.text,
+                       'date': current_last_message.date,
+                       'message_id': current_last_message.id,
+                       'current': is_current}
+        all_messages.append(new_message)
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
     #
