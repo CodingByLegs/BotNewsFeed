@@ -47,16 +47,19 @@ async def dump_all_messages(channel):
         with open(path_to_json_file, 'r', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
             json_data_length = len(json_data)
-            i = 0
-            while i < json_data_length:
-                if json_data[i]['current']:
-                    # если сообщений до конца файла меньше, чем барьер, то поднимаем флаг на репарсинг
-                    if json_data_length - i < barrier_to_reparse_channel_count_messages:
-                        will_parse_flag = True
-        last_news_date = MyDataJSON(json_data[i - 1]['date'])  # подхватываем дату последней новости из json файла
-        date_different = date_now - last_news_date.date  # находим разницу по времени
-        if date_different < barrier_to_reparse_channel_last_news_time:
-            will_parse_flag = True
+            if json_data_length != 0:
+                i = 0
+                while i < json_data_length:
+                    if json_data[i]['current']:
+                        # если сообщений до конца файла меньше, чем барьер, то поднимаем флаг на репарсинг
+                        if json_data_length - i < barrier_to_reparse_channel_count_messages:
+                            will_parse_flag = True
+                last_news_date = MyDataJSON(json_data[i - 1]['date'])  # подхватываем дату последней новости из json файла
+                date_different = date_now - last_news_date.date  # находим разницу по времени
+                if date_different < barrier_to_reparse_channel_last_news_time:
+                    will_parse_flag = True
+            else:
+                will_parse_flag = True
 
     if will_parse_flag:
         limit_msg = 21  # максимальное число записей, передаваемых за один раз
