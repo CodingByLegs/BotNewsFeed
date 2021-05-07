@@ -91,17 +91,20 @@ async def delete_channel_from_news_feed_kb(channel: str, page):
 
 async def create_my_categories_kb():
     my_categories_custom: list = await db.get_user_categories()
-    my_categories_our: list = await db.get_our_categories()
-    my_categories_kb = InlineKeyboardMarkup(row_width=1)
-    if my_categories_custom is not None:
-        for category in my_categories_custom:
+    if len(my_categories_custom < 5):
+        my_categories_our: list = await db.get_our_categories()
+        my_categories_kb = InlineKeyboardMarkup(row_width=1)
+        if my_categories_custom is not None:
+            for category in my_categories_custom:
+                inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+                my_categories_kb.insert(inline_button)
+        for category in my_categories_our:
             inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
             my_categories_kb.insert(inline_button)
-    for category in my_categories_our:
-        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
-        my_categories_kb.insert(inline_button)
-    my_categories_kb.add(InlineKeyboardButton(text="Назад", callback_data="back"))
-    return my_categories_kb
+        my_categories_kb.add(InlineKeyboardButton(text="Назад", callback_data="back"))
+        return my_categories_kb
+    else:
+        await bot.send_message()
 
 
 async def create_creation_of_categories_kb(category_name: str):
