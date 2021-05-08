@@ -8,7 +8,7 @@ from utils.MyBool import MyBool
 
 class DBComands:
     pool: Connection = db
-    ADD_NEW_USER_TO_NEWS_FEED = "INSERT INTO news_feed(user_id) VALUES($1)"
+    ADD_NEW_USER_TO_NEWS_FEED = "INSERT INTO news_feed(user_id, news_period) VALUES($1, $2)"
     ADD_CHANNEL_TO_NEWS_FEED = "UPDATE news_feed SET news_channels = " \
                                "array_append(news_channels, $1) " \
                                "WHERE user_id = $2"
@@ -50,9 +50,11 @@ class DBComands:
     async def add_new_user(self):
         user = types.User.get_current()
         user_id = user.id
+        period = 720
+        args = user_id, 720
         command = self.ADD_NEW_USER_TO_NEWS_FEED
         try:
-            await self.pool.fetchval(command, user_id)
+            await self.pool.fetchval(command, *args)
         except UniqueViolationError:
             pass
 
