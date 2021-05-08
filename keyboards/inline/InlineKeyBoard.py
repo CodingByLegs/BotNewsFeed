@@ -95,12 +95,15 @@ async def create_my_categories_kb():
     my_categories_kb = InlineKeyboardMarkup(row_width=1)
     if my_categories_custom is not None:
         for category in my_categories_custom:
-            inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+            inline_button = InlineKeyboardButton(text=category,
+                                                 callback_data=category_callback.new(category_name=category))
             my_categories_kb.insert(inline_button)
     for category in my_categories_our:
-        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+        inline_button = InlineKeyboardButton(text=category,
+                                             callback_data=category_callback.new(category_name=category))
         my_categories_kb.insert(inline_button)
-    my_categories_kb.add(InlineKeyboardButton(text="Назад", callback_data="back"))
+    my_categories_kb.add(InlineKeyboardButton(text="Назад",
+                                              callback_data=action_callback.new(action_name="back", page=0)))
     return my_categories_kb
 
 
