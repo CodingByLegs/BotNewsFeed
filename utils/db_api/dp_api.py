@@ -49,7 +49,7 @@ class DBComands:
     async def add_new_user(self):
         user = types.User.get_current()
         user_id = user.id
-        period = 720
+        period = 1440
         args = user_id, 720
         command = self.ADD_NEW_USER_TO_NEWS_FEED
         try:
