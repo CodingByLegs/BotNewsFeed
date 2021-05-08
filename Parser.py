@@ -60,7 +60,7 @@ async def dump_all_messages(channel):
         limit_msg = 50  # максимальное число записей, передаваемых за один раз
         all_messages = []  # список всех сообщений
 
-        period = timedelta(minutes=db.get_news_period())
+        period = timedelta(minutes=await db.get_news_period())
         # period = timedelta(minutes=24*60)
         date_period: datetime = datetime.now(tz=timzone) - period
         print(date_period)
@@ -112,49 +112,54 @@ async def dump_news(category_name=None):
     user = types.User.get_current()
     all_news: list = []
     user_id = user.id
-    if category_name is None:
-        channels: list = await db.get_news_channels()
-    else:
+    lost_news = -1
+    if category_name is not None:
         channels: list = await db.get_user_categories()
-        if not channels.count(category_name):
+        if channels is not None and not channels.count(category_name):
+            channels: list = await db.get_our_category_channels(category_name)
+        else:
             channels: list = await db.get_category_channels(category_name)
-    count_of_channels = len(channels)
-    dot_json_str = '.json'
-    path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
-    news_per_dump = 20  # кол-во сообщений для единоразовго отображения
-    news_from_one_channel = math.trunc(news_per_dump / count_of_channels)  # округляем вниз
-    lost_news = news_per_dump % news_from_one_channel  # если кол-во каналов пользователя не кратно 20 + защита,
-    # если число каналов пользователя >20
-    for channel in channels:
-        link_channel_to_parse = "https://t.me/" + channel
-        await dump_all_messages(link_channel_to_parse)  # репариснг канала перед выводом
-        current_path = path_to_user_directory + channel + dot_json_str
-        with open(current_path, 'r', encoding='utf-8') as json_file:
-            json_data: list = json.load(json_file)
-            json_data_length = len(json_data)
-            i = json_data_length - 1
-            message_read = 0
-            # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
-            while i > -1 and json_data_length - 1 - i != news_from_one_channel:
-                news = dict(message=json_data[i]['message'],
-                            date=json_data[i]['date'])
-                all_news.append(news)
-                json_data.pop()  # удаляем последний элемент списка, тот, который только что добавили
-                message_read += 1
-                i -= 1
-            if message_read == news_from_one_channel:  # если прочитали все сообщения, то проверяем
-                if lost_news and len(json_data):  # если есть "потерянные" сообщения и в текущем файле еще есть
-                    # сообщения, если есть, то берем одно и добираем в итоговый список
+    else:
+        channels: list = await db.get_news_channels()
+
+    if channels is not None:
+        count_of_channels = len(channels)
+        dot_json_str = '.json'
+        path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
+        news_per_dump = 20  # кол-во сообщений для единоразовго отображения
+        news_from_one_channel = math.trunc(news_per_dump / count_of_channels)  # округляем вниз
+        lost_news = news_per_dump % news_from_one_channel  # если кол-во каналов пользователя не кратно 20 + защита,
+        # если число каналов пользователя >20
+        for channel in channels:
+            link_channel_to_parse = "https://t.me/" + channel
+            await dump_all_messages(link_channel_to_parse)  # репариснг канала перед выводом
+            current_path = path_to_user_directory + channel + dot_json_str
+            with open(current_path, 'r', encoding='utf-8') as json_file:
+                json_data: list = json.load(json_file)
+                json_data_length = len(json_data)
+                i = json_data_length - 1
+                message_read = 0
+                # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
+                while i > -1 and json_data_length - 1 - i != news_from_one_channel:
                     news = dict(message=json_data[i]['message'],
                                 date=json_data[i]['date'])
                     all_news.append(news)
-                    json_data.pop()
-                    lost_news -= 1
-            else:
-                lost_news += news_from_one_channel - message_read  # если из текущего канала были считаны все нововсти
-                # но их кол-во <news_from_one_channel, то пропущенные сообщения добавим к lost_news
-        with open(current_path, 'w', encoding='utf-8') as json_file:
-            json.dump(json_data, json_file, ensure_ascii=False, indent=4)   # обновляем json файл после изъятия новостей
+                    json_data.pop()  # удаляем последний элемент списка, тот, который только что добавили
+                    message_read += 1
+                    i -= 1
+                if message_read == news_from_one_channel:  # если прочитали все сообщения, то проверяем
+                    if lost_news and len(json_data):  # если есть "потерянные" сообщения и в текущем файле еще есть
+                        # сообщения, если есть, то берем одно и добираем в итоговый список
+                        news = dict(message=json_data[i]['message'],
+                                    date=json_data[i]['date'])
+                        all_news.append(news)
+                        json_data.pop()
+                        lost_news -= 1
+                else:
+                    lost_news += news_from_one_channel - message_read  # если из текущего канала были считаны все нововсти
+                    # но их кол-во <news_from_one_channel, то пропущенные сообщения добавим к lost_news
+            with open(current_path, 'w', encoding='utf-8') as json_file:
+                json.dump(json_data, json_file, ensure_ascii=False, indent=4)   # обновляем json файл после изъятия новостей
     all_news.append(dict(lost_news=lost_news))  # записываем в конец списка словарь со сзначением кол-ва
     # пропущенных новостей
     return all_news
