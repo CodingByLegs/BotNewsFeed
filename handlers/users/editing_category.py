@@ -5,9 +5,9 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb,\
-    refresh_creation_of_categories_kb, create_list_of_channels_of_category_kb, refresh_list_of_channels_of_category_kb,\
-    delete_channel_or_category_kb
+from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb, \
+    refresh_creation_of_categories_kb, create_list_of_channels_of_category_kb, refresh_list_of_channels_of_category_kb, \
+    delete_channel_or_category_kb, create_editing_category_kb
 from states.States import NewsFeedStates, StatesOfMenu, NewCategory, EditingCategory
 from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback, \
     special_action_callback, category_callback, special_delete_channel_callback, special_page_callback,\
@@ -19,8 +19,10 @@ from utils.db_api.dp_api import db
 
 
 @dp.callback_query_handler(category_callback.filter(), state=StatesOfMenu.editing_category)
-async def editing_category(call: CallbackQuery, callback_data: dict):
+async def editing_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await call.answer(cache_time=1)
+    await state.update_data(message_id_main_inline=call.message.message_id)  # запоминаем message_id инлайн сообщения
+    # с назаваниями категорий
     category_name = callback_data.get("category_name")
     text_message1 = "Для удаления канала из категории нажмите по нему\n"
     text_message2 = f'''Список каналов категории \"{category_name}\":'''
@@ -82,7 +84,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
 
 
 @dp.callback_query_handler(channel_callback_with_category.filter(), state=EditingCategory.editing_category)
-async def show_next_channels_page(call: CallbackQuery, callback_data: dict, state: FSMContext):
+async def accept_deleting_channel(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await call.answer(cache_time=5)
     await state.update_data(message_id=call.message.message_id)
     channel_name = callback_data.get("channel_name")
@@ -90,6 +92,27 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict, stat
     page = callback_data.get("page")
     await call.message.answer(f'Удалитиь канал {channel_name} из категории {category_name}?',
                               reply_markup=await delete_channel_or_category_kb(category_name, channel_name, page))
+
+
+@dp.callback_query_handler(special_delete_channel_callback.filter(channel_name='\n'),
+                           state=EditingCategory.editing_category)
+async def accept_deleting_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    answer = callback_data.get("answer")
+    category_name = callback_data.get("category_name")
+    state_data = await state.get_data()
+    message_id = state_data['message_id']
+    main_inline_message_id = state_data['message_id_main_inline']
+    if answer == "yes":
+        await db.remove_category(category_name)
+        await bot.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                            message_id=main_inline_message_id,
+                                            reply_markup=await create_editing_category_kb())
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
+        await bot.send_message(call.message.chat.id, "Категория удалена!")
+        await sleep(2)
+        await bot.delete_message(call.message.chat.id, call.message.message_id + 1)
+    else:
+        await bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
 @dp.callback_query_handler(special_delete_channel_callback.filter(), state=EditingCategory.editing_category)
@@ -104,7 +127,8 @@ async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMCon
         await db.remove_channel_from_category(channel, category_name)
         await bot.edit_message_reply_markup(chat_id=call.message.chat.id,
                                             message_id=message_id,
-                                            reply_markup=await refresh_list_of_channels_of_category_kb(category_name, page))
+                                            reply_markup=await refresh_list_of_channels_of_category_kb(category_name,
+                                                                                                       page))
         await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(call.message.chat.id, "Канал удален!")
         await sleep(2)
@@ -113,7 +137,10 @@ async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMCon
         await bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
-# @dp.callback_query_handler(delete_category_callback.filter(), state=EditingCategory.editing_category)
-# async def delete_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
-
-
+@dp.callback_query_handler(delete_category_callback.filter(), state=EditingCategory.editing_category)
+async def delete_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    await call.answer(cache_time=5)
+    await state.update_data(message_id=call.message.message_id)
+    category_name = callback_data.get("category_name")
+    await call.message.answer(f'Удалитиь категорию {category_name}?',
+                              reply_markup=await delete_channel_or_category_kb(category_name))
