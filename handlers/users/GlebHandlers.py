@@ -63,7 +63,7 @@ async def menu_choice(message: types.Message, state: FSMContext):
             # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
             date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
             news_message: str = date_to_send + news['message']
-            await bot.send_message(message.chat.id, news_message)
+            await bot.send_message(message.chat.id, news_message, reply_markup=KeyBoard.news_feed_kb)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
