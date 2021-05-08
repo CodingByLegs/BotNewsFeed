@@ -29,7 +29,8 @@ async def editing_category(call: CallbackQuery, callback_data: dict):
     await EditingCategory.editing_category.set()
 
 
-@dp.callback_query_handler(action_callback_with_category.filter(action_name="add_new_channel"), state=StatesOfMenu.editing_category)
+@dp.callback_query_handler(action_callback_with_category.filter(action_name="add_new_channel"),
+                           state=EditingCategory.editing_category)
 async def get_link_for_new_channel(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await call.answer(cache_time=3)
     await call.message.answer("Введите ссылку на канал в формате t.me/название_канала")
@@ -63,22 +64,24 @@ async def add_new_channel(message: Message, state: FSMContext):
     await bot.edit_message_reply_markup(chat_id=chat_id,
                                         message_id=message_id,
                                         reply_markup=await refresh_list_of_channels_of_category_kb(category_name, page))
-    await StatesOfMenu.editing_category.set()
+    await EditingCategory.editing_category.set()
 
 
 @dp.callback_query_handler(page_callback_with_category.filter(rotation="forward"), state=StatesOfMenu.editing_category)
 async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
     page = int(callback_data.get("page_number")) + 1
-    await call.message.edit_reply_markup(reply_markup=await refresh_list_of_channels_of_category_kb(callback_data.get("category_name"), page))
+    await call.message.edit_reply_markup(
+        reply_markup=await refresh_list_of_channels_of_category_kb(callback_data.get("category_name"), page))
 
 
 @dp.callback_query_handler(page_callback_with_category.filter(rotation="backward"), state=StatesOfMenu.editing_category)
 async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
     page = int(callback_data.get("page_number")) - 1
-    await call.message.edit_reply_markup(reply_markup=await refresh_list_of_channels_of_category_kb(callback_data.get("category_name"), page))
+    await call.message.edit_reply_markup(
+        reply_markup=await refresh_list_of_channels_of_category_kb(callback_data.get("category_name"), page))
 
 
-@dp.callback_query_handler(channel_callback_with_category.filter(), state=StatesOfMenu.editing_category)
+@dp.callback_query_handler(channel_callback_with_category.filter(), state=EditingCategory.editing_category)
 async def show_next_channels_page(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await call.answer(cache_time=5)
     await state.update_data(message_id=call.message.message_id)
@@ -89,7 +92,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict, stat
                               reply_markup=await delete_channel_or_category_kb(category_name, channel_name, page))
 
 
-@dp.callback_query_handler(special_delete_channel_callback.filter(), state=StatesOfMenu.editing_category)
+@dp.callback_query_handler(special_delete_channel_callback.filter(), state=EditingCategory.editing_category)
 async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMContext):
     answer = callback_data.get("answer")
     category_name = callback_data.get("category_name")
@@ -110,6 +113,7 @@ async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMCon
         await bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
-# @dp.callback_query_handler(delete_category_callback.filter(), state=StatesOfMenu.editing_category)
+# @dp.callback_query_handler(delete_category_callback.filter(), state=EditingCategory.editing_category)
 # async def delete_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
+
 

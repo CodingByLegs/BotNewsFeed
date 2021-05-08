@@ -7,7 +7,6 @@ from loader import bot
 from loader import dp
 from states.States import StatesOfMenu
 from utils.MyDataJSON import MyDataJSON
-from utils.db_api.dp_api import db
 
 
 @dp.callback_query_handler(category_callback.filter(), state=StatesOfMenu.my_categories)
