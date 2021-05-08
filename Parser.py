@@ -115,7 +115,9 @@ async def dump_news(category_name=None):
     if category_name is None:
         channels: list = await db.get_news_channels()
     else:
-        channels: list = await db.get_category_channels(category_name)
+        channels: list = await db.get_user_categories()
+        if not channels.count(category_name):
+            channels: list = await db.get_category_channels(category_name)
     count_of_channels = len(channels)
     dot_json_str = '.json'
     path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
@@ -134,12 +136,12 @@ async def dump_news(category_name=None):
             message_read = 0
             # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
             while i > -1 and json_data_length - 1 - i != news_from_one_channel:
-                message_read += 1
-                i -= 1
                 news = dict(message=json_data[i]['message'],
                             date=json_data[i]['date'])
                 all_news.append(news)
                 json_data.pop()  # удаляем последний элемент списка, тот, который только что добавили
+                message_read += 1
+                i -= 1
             if message_read == news_from_one_channel:  # если прочитали все сообщения, то проверяем
                 if lost_news and len(json_data):  # если есть "потерянные" сообщения и в текущем файле еще есть
                     # сообщения, если есть, то берем одно и добираем в итоговый список
@@ -156,8 +158,6 @@ async def dump_news(category_name=None):
     all_news.append(dict(lost_news=lost_news))  # записываем в конец списка словарь со сзначением кол-ва
     # пропущенных новостей
     return all_news
-
-
 
 
 async def parseURL(url):
