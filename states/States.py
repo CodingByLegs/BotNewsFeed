@@ -1,5 +1,6 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+
 class StatesOfMenu(StatesGroup):
     menu = State()
     categories = State()
@@ -10,6 +11,11 @@ class StatesOfMenu(StatesGroup):
     test = State()
 
 
+class EditingCategory(StatesGroup):
+    editing_category = State()
+    wait_link = State()
+
+
 class NewCategory(StatesGroup):
     add_new_category_interring_name_of_channel = State()
     Waiting = State()
@@ -17,7 +23,6 @@ class NewCategory(StatesGroup):
 
 class NewsFeedStates(StatesGroup):
     wait_link = State()
-
 
 
 class Form(StatesGroup):

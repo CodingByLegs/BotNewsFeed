@@ -38,7 +38,7 @@ async def menu_choice(message: types.Message, state: FSMContext):
     elif message.text == "Список канало ленты":
         await state.update_data(page=1)  # каждый раз делаем страничку первой, для вывода новостной ленты
         await bot.send_message(message.from_user.id, "Список каналов ленты:", reply_markup= KeyBoard.back_to_menu_kb)
-        await bot.send_message(message.from_user.id, "Текст", reply_markup= await InlineKeyBoard.create_list_of_feed_channels_kb())
+        await bot.send_message(message.from_user.id, "Текст", reply_markup=await InlineKeyBoard.create_list_of_feed_channels_kb())
         await StatesOfMenu.list_of_feed_channels.set()
     elif message.text == "Вывести новостную ленту":
         news_feed_messages: list = await dump_news()
@@ -64,14 +64,19 @@ async def categories_choice(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, "Текст", reply_markup=await InlineKeyBoard.create_my_categories_kb())
         await StatesOfMenu.my_categories.set()
     elif message.text == "Создать категорию":
-        # await bot.send_message(message.from_user.id, "Создать категорию:", reply_markup=KeyBoard.back_to_menu_kb)
-        # await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.new_category_kb)
-        await bot.send_message(message.from_user.id, "Введите название категории:", reply_markup=types.ReplyKeyboardRemove())
-        await StatesOfMenu.add_new_category_interring_name_of_category.set()
+        if len(await db.get_user_categories()) < 5:
+            await bot.send_message(message.from_user.id, "Введите название категории:", reply_markup=KeyBoard.back_to_menu_kb)
+            await StatesOfMenu.add_new_category_interring_name_of_category.set()
+        else:
+            await bot.send_message(message.from_user.id, "Достигнуто максимальное количество допустимых категорий(5)")
     elif message.text == "Редактирование категорий":
-        await bot.send_message(message.from_user.id, "Редактирование категории:", reply_markup=KeyBoard.back_to_menu_kb)
-        await bot.send_message(message.from_user.id, "Текст", reply_markup=InlineKeyBoard.editing_category_choice_kb)
-        await StatesOfMenu.editing_category.set()
+        if db.get_user_categories() is not None:
+            await bot.send_message(message.from_user.id, "Редактирование категории:", reply_markup=KeyBoard.back_to_menu_kb)
+            await bot.send_message(message.from_user.id, "Текст", reply_markup=await InlineKeyBoard.create_editing_category_kb())
+            await StatesOfMenu.editing_category.set()
+            #await state.update_data(message_id=message.message_id)
+        else:
+            await bot.send_message(message.from_user.id, "У вас ещё нет ни одной созданной кастомной категории для редактирования")
     elif message.text == "Вернуться в меню":
         await state.finish()
         await StatesOfMenu.menu.set()
@@ -91,7 +96,7 @@ async def add_new_category(message: types.Message, state: FSMContext):
     #     await state.finish()
     #     await StatesOfMenu.menu.set()
     #     await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
+    #     await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)
