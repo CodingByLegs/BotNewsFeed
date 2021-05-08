@@ -21,8 +21,8 @@ class DBComands:
                       "WHERE user_id = $2 "
     GET_NEWS_PERIOD = "SELECT news_period FROM news_feed " \
                       "WHERE user_id = $1 "
-    ADD_NEW_CATEGORY = "INSERT INTO custom_categories(user_id, category_name, is_custom) " \
-                       "VALUES($1, $2, $3) "
+    ADD_NEW_CATEGORY = "INSERT INTO custom_categories(user_id, category_name) " \
+                       "VALUES($1, $2) "
     REMOVE_CATEGORY = "DELETE FROM custom_categories WHERE user_id = $1 and category_name = $2"
     ADD_CHANNEL_TO_CATEGORY = "UPDATE custom_categories SET category_channels = " \
                               "array_append(category_channels, $1) " \
@@ -45,7 +45,6 @@ class DBComands:
     GET_OUR_CATEGORY_CHANNELS = "SELECT category_channels FROM our_categories " \
                                 "WHERE category_name = $1"
     GET_OUR_CATEGORIES = "SELECT array_agg(category_name) FROM our_categories"
-
 
     async def add_new_user(self):
         user = types.User.get_current()
@@ -100,11 +99,10 @@ class DBComands:
         command = self.GET_NEWS_PERIOD
         return await self.pool.fetchval(command, user_id)
 
-    async def add_new_category(self, category_name, isCustom):
+    async def add_new_category(self, category_name):
         user = types.User.get_current()
         user_id = user.id
-        isCustom = MyBool.str_to_bool(isCustom)
-        args = user_id, category_name, isCustom
+        args = user_id, category_name
         command = self.ADD_NEW_CATEGORY
         try:
             await self.pool.fetchval(command, *args)
