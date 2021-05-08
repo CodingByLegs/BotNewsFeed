@@ -1,3 +1,5 @@
+import os
+
 from Parser import dump_news
 from loader import bot, dp
 from aiogram import types
@@ -18,6 +20,10 @@ async def welcome(message: types.Message, state: FSMContext):
                  "Еще я умею показывать новости по категориям. Есть уже готовые, но ты можешь создать свои!"
     await bot.send_message(message.from_user.id, hello_word, reply_markup=KeyBoard.start_kb)
     await db.add_new_user()
+    # создание директории для хранения json файлов пользователя
+    path = f'''G:/PyCharmProjects/BotNewsFeed/jsonfiles/{message.from_user.id}'''
+    if not os.path.isdir(path):
+        os.makedirs(path)
     await StatesOfMenu.menu.set()
 
 
