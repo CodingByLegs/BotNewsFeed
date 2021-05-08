@@ -50,7 +50,7 @@ class DBComands:
         user = types.User.get_current()
         user_id = user.id
         period = 1440
-        args = user_id, 720
+        args = user_id, period
         command = self.ADD_NEW_USER_TO_NEWS_FEED
         try:
             await self.pool.fetchval(command, *args)
