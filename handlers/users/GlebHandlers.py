@@ -77,7 +77,8 @@ async def categories_choice(message: types.Message, state: FSMContext):
                                reply_markup=await InlineKeyBoard.create_my_categories_kb())
         await StatesOfMenu.my_categories.set()
     elif message.text == "Создать категорию":
-        if len(await db.get_user_categories()) < 5:
+        user_categories = await db.get_user_categories()
+        if user_categories is None or len(user_categories) < 5:
             await bot.send_message(message.from_user.id, "Введите название категории",
                                    reply_markup=KeyBoard.back_to_menu_kb)
             await StatesOfMenu.add_new_category_interring_name_of_category.set()
@@ -119,15 +120,23 @@ async def add_new_category(message: types.Message, state: FSMContext):
     #     await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
-@dp.message_handler(state=NewCategory.Waiting)
-async def back_to_menu_from_add_new_category(message: types.Message, state: FSMContext):
-    if message.text == "Вернуться в меню":
-        await state.finish()
-        await StatesOfMenu.menu.set()
-        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+# @dp.message_handler(state=NewCategory.all_states)
+# async def back_to_menu_from_add_new_category(message: types.Message, state: FSMContext):
+#     if message.text == "Вернуться в меню":
+#         await state.finish()
+#         await StatesOfMenu.menu.set()
+#         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+#
+#
+# @dp.message_handler(state=StatesOfMenu.all_states)
+# async def back_to_menu_from_add_new_category(message: types.Message, state: FSMContext):
+#     if message.text == "Вернуться в меню":
+#         await state.finish()
+#         await StatesOfMenu.menu.set()
+#         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
 
 
-@dp.message_handler(state=StatesOfMenu.all_states)
+@dp.message_handler(state="*")
 async def back_to_menu(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
         await state.finish()
