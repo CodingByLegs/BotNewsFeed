@@ -65,6 +65,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
     await call.message.edit_reply_markup(reply_markup=await refresh_list_of_feed_channels_kb(page))
 
 
+# call_back для нажатия по каналу
 @dp.callback_query_handler(channel_callback.filter(), state=StatesOfMenu.list_of_feed_channels)
 async def show_next_channels_page(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await call.answer(cache_time=5)
@@ -76,7 +77,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict, stat
                               reply_markup=await delete_channel_from_news_feed_kb(channel_name, page))
 
 
-# call_back для нажатия по каналу
+# call_back для подтверждения удаления канала
 @dp.callback_query_handler(delete_channel_callback.filter(), state=StatesOfMenu.list_of_feed_channels)
 async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMContext):
     answer = callback_data.get("answer")

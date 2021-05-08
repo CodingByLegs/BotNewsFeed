@@ -20,8 +20,12 @@ from utils.db_api.dp_api import db
 
 @dp.callback_query_handler(category_callback.filter(), state=StatesOfMenu.editing_category)
 async def editing_category(call: CallbackQuery, callback_data: dict):
+    await call.answer(cache_time=1)
     category_name = callback_data.get("category_name")
-    await call.message.answer(category_name, reply_markup=await create_list_of_channels_of_category_kb(category_name))
+    text_message1 = "Для удаления канала из категории нажмите по нему\n"
+    text_message2 = f'''Список каналов категории \"{category_name}\":'''
+    await call.message.answer(text_message1)
+    await call.message.answer(text_message2, reply_markup=await create_list_of_channels_of_category_kb(category_name))
     await EditingCategory.editing_category.set()
 
 

@@ -60,8 +60,8 @@ async def dump_all_messages(channel):
         limit_msg = 50  # максимальное число записей, передаваемых за один раз
         all_messages = []  # список всех сообщений
 
-        #period = timedelta(minutes=db.get_news_period())
-        period = timedelta(minutes=24*60)
+        period = timedelta(minutes=db.get_news_period())
+        # period = timedelta(minutes=24*60)
         date_period: datetime = datetime.now(tz=timzone) - period
         print(date_period)
         messages = client.iter_messages(entity=channel, limit=1, offset_date=date_period)

@@ -2,7 +2,7 @@ from aiogram import types
 
 
 button1 = types.KeyboardButton('Категории')
-button2 = types.KeyboardButton('Список канало ленты')
+button2 = types.KeyboardButton('Список каналов ленты')
 button3 = types.KeyboardButton('Вывести новостную ленту')
 start_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).add(button1).add(button2).add(button3)
 

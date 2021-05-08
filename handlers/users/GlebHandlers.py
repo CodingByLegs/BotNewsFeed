@@ -80,9 +80,9 @@ async def categories_choice(message: types.Message, state: FSMContext):
     elif message.text == "Редактирование категорий":
         # user_categories =
         if await db.get_user_categories() is not None:
-            await bot.send_message(message.from_user.id, "Редактирование категории:",
+            await bot.send_message(message.from_user.id, "Выбирите категорию для редактирования",
                                    reply_markup=KeyBoard.back_to_menu_kb)
-            await bot.send_message(message.from_user.id, "Текст",
+            await bot.send_message(message.from_user.id, "Мои категории:",
                                    reply_markup=await InlineKeyBoard.create_editing_category_kb())
             await StatesOfMenu.editing_category.set()
             # await state.update_data(message_id=message.message_id)
@@ -119,6 +119,7 @@ async def back_to_menu_from_add_new_category(message: types.Message, state: FSMC
         await state.finish()
         await StatesOfMenu.menu.set()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+
 
 @dp.message_handler(state=StatesOfMenu.all_states)
 async def back_to_menu(message: types.Message, state: FSMContext):
