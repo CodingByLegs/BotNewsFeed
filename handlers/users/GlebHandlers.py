@@ -25,6 +25,7 @@ async def welcome(message: types.Message, state: FSMContext):
     if not os.path.isdir(path):
         os.makedirs(path)
     await StatesOfMenu.menu.set()
+    await state.update_data(message_id=message.message_id - 1)
 
 
 @dp.message_handler(commands="cancel", state="*")
@@ -96,8 +97,12 @@ async def categories_choice(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id,
                                    "У вас ещё нет ни одной созданной кастомной категории для редактирования")
     elif message.text == "Вернуться в меню":
-        await state.finish()
-        await StatesOfMenu.menu.set()
+        StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
@@ -122,18 +127,25 @@ async def add_new_category(message: types.Message, state: FSMContext):
 @dp.message_handler(state=NewCategory.Waiting)
 async def back_to_menu_from_add_new_category(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
-        await state.finish()
         await StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)
 async def back_to_menu(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
-        await state.finish()
         await StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
 @dp.message_handler(lambda message: message.text.lower() == 'lol', state=StatesOfMenu.test)
