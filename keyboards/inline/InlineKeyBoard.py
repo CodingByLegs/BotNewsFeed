@@ -249,7 +249,7 @@ async def refresh_list_of_channels_of_category_kb(category_name: str, page: int)
     return list_of_channels_of_category
 
 
-async def delete_channel_or_category_kb(category_name: str, channel=None, page=None):
+async def delete_channel_or_category_kb(category_name: str, channel='\n', page=-1):
     delete_channel_from_category = InlineKeyboardMarkup()
     button_yes = InlineKeyboardButton(text="да",
                                       callback_data=special_delete_channel_callback.new(answer="yes",
