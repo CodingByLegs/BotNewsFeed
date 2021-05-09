@@ -5,6 +5,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from Parser import dump_all_messages
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb
 from states.States import NewsFeedStates, StatesOfMenu
 from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback
@@ -36,19 +37,27 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
     else:
         pass  # если не ссылка
     # проверка на наличие такого канала
-    await db.add_channel_to_news_feed(channel_name)
-    await message.answer("Канал был добавлен!")
-    await bot.delete_message(message.chat.id, message.message_id - 1)
-    await bot.delete_message(message.chat.id, message.message_id)
-    await asyncio.sleep(2)
-    await bot.delete_message(message.chat.id, message.message_id + 1)  # удаление последнего отправленного сообщения
-    state_data = await state.get_data()  # обновление инлайн клавиатуры
-    message_id = state_data['message_id']
-    page = state_data['page']
-    chat_id = state_data['chat_id']
-    await bot.edit_message_reply_markup(chat_id=chat_id,
-                                        message_id=message_id,
-                                        reply_markup=await refresh_list_of_feed_channels_kb(page))
+    exception = await dump_all_messages(channel_name)
+    if exception:
+        await bot.send_message(message.chat.id, "Такого канала не существует или он закрытый")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await asyncio.sleep(2)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+    else:
+        await db.add_channel_to_news_feed(channel_name)
+        await message.answer("Канал был добавлен!")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await asyncio.sleep(2)
+        await bot.delete_message(message.chat.id, message.message_id + 1)  # удаление последнего отправленного сообщения
+        state_data = await state.get_data()  # обновление инлайн клавиатуры
+        message_id = state_data['message_id']
+        page = state_data['page']
+        chat_id = state_data['chat_id']
+        await bot.edit_message_reply_markup(chat_id=chat_id,
+                                            message_id=message_id,
+                                            reply_markup=await refresh_list_of_feed_channels_kb(page))
     await StatesOfMenu.list_of_feed_channels.set()
 
 

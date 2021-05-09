@@ -5,11 +5,9 @@ from datetime import datetime
 
 import pytz
 from aiogram import types
-from telethon.tl.functions.messages import GetHistoryRequest
 from datetime import timedelta
 
 from loader import client
-from utils.MyBool import MyBool
 from utils.MyDataJSON import MyDataJSON
 from utils.db_api.dp_api import db
 
@@ -28,6 +26,8 @@ async def dump_all_messages(channel):
         channel_name = channel.partition("https://t.me/")[2]
     elif channel.startswith("t.me/"):
         channel_name = channel.partition("t.me/")[2]
+    else:
+        channel_name = " "
     # создаем директорию для поиска json файлов пользователя
     path_json_user_channels = f'''jsonfiles/{user_id}'''
     # получаем список файлов этой директории
@@ -65,9 +65,12 @@ async def dump_all_messages(channel):
         date_period: datetime = datetime.now(tz=timzone) - period
         print(date_period)
         messages = client.iter_messages(entity=channel, limit=1, offset_date=date_period)
-        async for message in messages:
-            last_msg_id = message.id
-            print(message.text)
+        try:
+            async for message in messages:
+                last_msg_id = message.id
+                print(message.text)
+        except Exception as e:
+            return e
         print(last_msg_id)
         messages = client.iter_messages(entity=channel, limit=limit_msg, min_id=last_msg_id)
         last_msg_id += 1  # тк сообщения с last_nsg_id не будет парситься
