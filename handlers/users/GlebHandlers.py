@@ -64,9 +64,44 @@ async def menu_choice(message: types.Message, state: FSMContext):
             date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
             news_message: str = date_to_send + news['message']
             await bot.send_message(message.chat.id, news_message, reply_markup=KeyBoard.news_feed_kb)
+    elif message.text == "Задать переодичность отображения новостей":
+        await bot.send_message(message.from_user.id, "Выберите переодичность отображения новостей:", reply_markup=KeyBoard.period_kb)
+        await StatesOfMenu.period.set()
+    elif message.text == "Вернуться в меню":
+        StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
+
+
+@dp.message_handler(state=StatesOfMenu.period)
+async def set_period(message: types.Message):
+    if message.text == "Сутки":
+        await db.set_news_period(1440)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - сутки!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "Три дня":
+        await db.set_news_period(4320)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Три дня!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "Неделя":
+        await db.set_news_period(10800)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Неделя!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "'Месяц'":
+        await db.set_news_period(43200)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Месяц!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
 
 
 @dp.message_handler(state=StatesOfMenu.categories)

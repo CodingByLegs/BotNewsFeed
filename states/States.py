@@ -8,6 +8,7 @@ class StatesOfMenu(StatesGroup):
     add_new_category_interring_name_of_category = State()
     my_categories = State()
     editing_category = State()
+    period = State()
     test = State()
 
 
