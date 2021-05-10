@@ -7,7 +7,13 @@ import pytz
 from aiogram import types
 from datetime import timedelta
 
+from telethon.tl import functions
+from telethon.tl.functions.channels import GetFullChannelRequest
+from telethon.tl.types import Channel
+
 from loader import client
+from telethon.sync import types as Telethon_tyoes
+from telethon.sync import utils
 from utils.MyDataJSON import MyDataJSON
 from utils.db_api.dp_api import db
 
@@ -68,10 +74,11 @@ async def dump_all_messages(channel):
         try:
             async for message in messages:
                 last_msg_id = message.id
-                print(message.text)
         except Exception as e:
             return e
-        print(last_msg_id)
+        channel_info = await client(GetFullChannelRequest(channel))
+        channel_real_name = channel_info.chats[0].title
+        print(channel_real_name)
         messages = client.iter_messages(entity=channel, limit=limit_msg, min_id=last_msg_id)
         last_msg_id += 1  # тк сообщения с last_nsg_id не будет парситься
 
@@ -95,6 +102,7 @@ async def dump_all_messages(channel):
                     new_message = {'message': current_last_message.text,
                                    'date': current_last_message.date,
                                    'message_id': current_last_message.id,
+                                   'channel': channel_real_name,
                                    'current': is_current}
                     all_messages.append(new_message)  # и добавляем в all_messages
                     current_last_message = message  # новое пришедшее сообщение делаем текущим
@@ -104,6 +112,7 @@ async def dump_all_messages(channel):
             new_message = {'message': current_last_message.text,
                            'date': current_last_message.date,
                            'message_id': current_last_message.id,
+                           'channel': channel_real_name,
                            'current': is_current}
             all_messages.append(new_message)
         # создание директории и запись json файла
@@ -145,7 +154,8 @@ async def dump_news(category_name=None):
                 # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
                 while i > -1 and json_data_length - 1 - i != news_from_one_channel:
                     news = dict(message=json_data[i]['message'],
-                                date=json_data[i]['date'])
+                                date=json_data[i]['date'],
+                                channel_name=json_data[i]['channel'])
                     all_news.append(news)
                     json_data.pop()  # удаляем последний элемент списка, тот, который только что добавили
                     message_read += 1
@@ -154,7 +164,8 @@ async def dump_news(category_name=None):
                     if lost_news and len(json_data):  # если есть "потерянные" сообщения и в текущем файле еще есть
                         # сообщения, если есть, то берем одно и добираем в итоговый список
                         news = dict(message=json_data[i]['message'],
-                                    date=json_data[i]['date'])
+                                    date=json_data[i]['date'],
+                                    channel_name=json_data[i]['channel'])
                         all_news.append(news)
                         json_data.pop()
                         lost_news -= 1
