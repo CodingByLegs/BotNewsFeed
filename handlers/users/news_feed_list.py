@@ -27,6 +27,7 @@ async def get_link_for_news_feed_channel(call: CallbackQuery, state: FSMContext,
                             page=callback_data.get("page"),
                             chat_id=call.message.chat.id)
     await NewsFeedStates.wait_link.set()
+    await state.update_data(last_message_id_to_delete=call.message.message_id)
 
 
 @dp.message_handler(text_contains="t.me/", state=NewsFeedStates.wait_link)
@@ -98,6 +99,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict, stat
     await state.update_data(message_id=call.message.message_id)  # запоминаем id inline сообщения со спсиком каналов
     channel_name = callback_data.get("channel_name")
     page = callback_data.get("page")
+    await state.update_data(last_message_id_to_delete=call.message.message_id)
     # отправляем сообщение с клавиаутрой для поддтверждения удаления
     await call.message.answer(f'Удалитиь канал {channel_name}?',
                               reply_markup=await delete_channel_from_news_feed_kb(channel_name, page))

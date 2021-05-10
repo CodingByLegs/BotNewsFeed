@@ -25,6 +25,7 @@ async def welcome(message: types.Message, state: FSMContext):
     if not os.path.isdir(path):
         os.makedirs(path)
     await StatesOfMenu.menu.set()
+    await state.update_data(last_message_id_to_delete=-1)
 
 
 @dp.message_handler(commands="cancel", state="*")
@@ -64,7 +65,8 @@ async def menu_choice(message: types.Message, state: FSMContext):
             news_date = MyDataJSON(news['date']).date
             # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
             date_to_send = from_int_time_to_str(news_date.hour, news_date.minute) + '\n'
-            news_message: str = date_to_send + news['message']
+            channel_name = news['channel_name'] + '\n'
+            news_message: str = date_to_send + channel_name + news['message']
             await bot.send_message(message.chat.id, news_message, disable_notification=True)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
@@ -137,8 +139,17 @@ async def back_to_menu(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
         await state.finish()
         await StatesOfMenu.menu.set()
+        data_state = await state.get_data()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        await clear_chat(message.chat.id, message.message_id)
+        try:
+            message_id = data_state['last_message_id_to_delete']
+            if message_id != 1:
+                state.update_data(last_message_id_to_delete=-1)
+            else:
+                message_id = message.message_id
+        except Exception as e:
+            message_id = message.message_id
+        await clear_chat(message.chat.id, message_id)
         # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
