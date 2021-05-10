@@ -25,7 +25,7 @@ async def welcome(message: types.Message, state: FSMContext):
     if not os.path.isdir(path):
         os.makedirs(path)
     await StatesOfMenu.menu.set()
-    await state.update_data(message_id=message.message_id - 1)
+    await state.update_data(last_message_id_to_delete=-1)
 
 
 @dp.message_handler(commands="cancel", state="*")
@@ -72,13 +72,10 @@ async def menu_choice(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, "Выберите переодичность отображения новостей:", reply_markup=KeyBoard.period_kb)
         await StatesOfMenu.period.set()
     elif message.text == "Вернуться в меню":
-        StatesOfMenu.menu.set()
-        data = await state.get_data()
-        message_id = data['message_id']
-        for i in range(message.message_id - message_id + 1):
-            await bot.delete_message(message.from_user.id, message_id + i)
-        await state.update_data(message_id=message.message_id + 1)
+        await StatesOfMenu.menu.set()
+        await state.update_data(last_message_id_to_delete=-1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
@@ -137,13 +134,10 @@ async def categories_choice(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id,
                                    "У вас ещё нет ни одной созданной кастомной категории для редактирования")
     elif message.text == "Вернуться в меню":
-        StatesOfMenu.menu.set()
+        await StatesOfMenu.menu.set()
         data = await state.get_data()
-        message_id = data['message_id']
-        for i in range(message.message_id - message_id + 1):
-            await bot.delete_message(message.from_user.id, message_id + i)
-        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
@@ -182,16 +176,7 @@ async def back_to_menu(message: types.Message, state: FSMContext):
         await StatesOfMenu.menu.set()
         data_state = await state.get_data()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        try:
-            message_id = data_state['last_message_id_to_delete']
-            if message_id != 1:
-                state.update_data(last_message_id_to_delete=-1)
-            else:
-                message_id = message.message_id
-        except Exception as e:
-            message_id = message.message_id
-        await clear_chat(message.chat.id, message_id)
-        # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
+        await clear_chat(message.chat.id, message.message_id, state)  # удаление лишних сообщений
 
 
 @dp.message_handler(lambda message: message.text.lower() == 'lol', state=StatesOfMenu.test)
@@ -204,8 +189,20 @@ async def get_text_messages(message: types.Message):
         await bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
 
 
-async def clear_chat(chat_id, last_message_id):
-    message_id = last_message_id
-    while await bot.delete_message(chat_id, message_id):
-        message_id -= 1
+# отчиска чата. Принимает chat_id, current_last_message_id - предполагаемое message_id последнего сообщения, если
+# где-то были использованы инлайн сообщения и было удаление сообщений, то в  data_state['last_message_id_to_delete']
+# будет хранится message_id этого инлайн сообщения, с него и начнется удаление, иначе переменная == -1, то есть
+# current_last_message_id действительно является текущим последним, и начнем удалять с него
+async def clear_chat(chat_id, current_last_message_id, state: FSMContext):
+    data_state = await state.get_data()
+    try:
+        message_id = data_state['last_message_id_to_delete']  # если где-то была допущена ошибка и забыто проставить
+        if message_id != -1:  # данно поле, то try except спасет от ошибок
+            await state.update_data(last_message_id_to_delete=-1)
+        else:
+            message_id = current_last_message_id
+    except Exception as e:
+        message_id = current_last_message_id
+    while await bot.delete_message(chat_id, message_id):  # удаляем цепочку сообщений, пока не дойдем до такого,
+        message_id -= 1  # которого не существует, тогда при попытке его удалить функция вернет False и выйдем из цикла
 
