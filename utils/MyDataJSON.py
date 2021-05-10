@@ -23,7 +23,11 @@ def from_int_time_to_str(hour_int, minute_int, second_int = None):
 
 
 class MyDataJSON(object):
-    def __init__(self, json_date: str):
+    def __init__(self, json_date: str, tz_hour = None, tz_minute = None):
+        if tz_hour is None:
+            tz_hour = 0
+        if tz_minute is None:
+            tz_minute = 0
         date = json_date.split('T')[0]
         time = json_date.split('T')[1]
         date = date.split('-')
@@ -37,12 +41,14 @@ class MyDataJSON(object):
         hour = int(time_main[0])
         minute = int(time_main[1])
         second = int(time_main[2])
-        time_tz_hour = int(time_tz[0])
-        time_tz_minute = int(time_tz[1])
-        if minute + time_tz_minute > 59:
-            minute = minute + time_tz_minute - 60
+        time_tz_hour = tz_hour
+        time_tz_minute = tz_minute
+        minute += tz_minute
+        hour += tz_hour
+        if minute > 59:
+            minute = minute - 60
             hour += 1
-            if hour + time_tz_hour > 23:
-                hour = hour + time_tz_hour - 24
-                day += 1  # на этом и остановимся)
+        if hour > 23:
+            hour = hour - 24
+            day += 1  # на этом и остановимся)
         self.date = datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)

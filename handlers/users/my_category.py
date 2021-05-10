@@ -18,7 +18,7 @@ async def show_category(call: CallbackQuery, callback_data: dict):
     lost_news = category_feed_messages[news_feed_messages_length - 1]['lost_news']
     category_feed_messages.pop(news_feed_messages_length - 1)
     for news in category_feed_messages:
-        news_date = MyDataJSON(news['date']).date
+        news_date = MyDataJSON(news['date'], 3).date
         # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
         date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
         news_message: str = date_to_send + news['message']
