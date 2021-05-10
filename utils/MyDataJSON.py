@@ -1,4 +1,25 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import pytz
+
+
+def from_int_time_to_str(hour_int, minute_int, second_int = None):
+    if hour_int < 10:
+        result = '0' + str(hour_int)
+    else:
+        result = str(hour_int)
+    result += ':'
+    if minute_int < 10:
+        result += '0' + str(minute_int)
+    else:
+        result += str(minute_int)
+    if second_int is not None:
+        result += ':'
+        if second_int < 10:
+            result += '0' + str(second_int)
+        else:
+            result += str(second_int)
+    return result
 
 
 class MyDataJSON(object):
@@ -25,8 +46,3 @@ class MyDataJSON(object):
                 hour = hour + time_tz_hour - 24
                 day += 1  # на этом и остановимся)
         self.date = datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
-
-
-if __name__ == '__main__':
-    my_date = MyDataJSON("2021-05-03T22:50:11+00:00")
-    print(my_date.date)
