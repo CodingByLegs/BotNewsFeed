@@ -25,7 +25,7 @@ async def welcome(message: types.Message, state: FSMContext):
     if not os.path.isdir(path):
         os.makedirs(path)
     await StatesOfMenu.menu.set()
-    await state.update_data(last_message_id_to_delete=-1)
+    await state.update_data(message_id=message.message_id - 1)
 
 
 @dp.message_handler(commands="cancel", state="*")
@@ -67,10 +67,45 @@ async def menu_choice(message: types.Message, state: FSMContext):
             date_to_send = from_int_time_to_str(news_date.hour, news_date.minute) + '\n'
             channel_name = news['channel_name'] + '\n'
             news_message: str = date_to_send + channel_name + news['message']
-            await bot.send_message(message.chat.id, news_message, disable_notification=True)
+            await bot.send_message(message.chat.id, news_message, reply_markup=KeyBoard.news_feed_kb, disable_notification=True)
+    elif message.text == "Задать переодичность отображения новостей":
+        await bot.send_message(message.from_user.id, "Выберите переодичность отображения новостей:", reply_markup=KeyBoard.period_kb)
+        await StatesOfMenu.period.set()
+    elif message.text == "Вернуться в меню":
+        StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
+
+
+@dp.message_handler(state=StatesOfMenu.period)
+async def set_period(message: types.Message):
+    if message.text == "Сутки":
+        await db.set_news_period(1440)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - сутки!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "Три дня":
+        await db.set_news_period(4320)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Три дня!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "Неделя":
+        await db.set_news_period(10800)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Неделя!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
+    if message.text == "'Месяц'":
+        await db.set_news_period(43200)
+        await bot.send_message(message.from_user.id, "Вы успешно установили период отображения новостей - Месяц!",
+                               reply_markup=KeyBoard.news_feed_kb)
+        await StatesOfMenu.menu.set()
 
 
 @dp.message_handler(state=StatesOfMenu.categories)
@@ -82,7 +117,8 @@ async def categories_choice(message: types.Message, state: FSMContext):
                                reply_markup=await InlineKeyBoard.create_my_categories_kb())
         await StatesOfMenu.my_categories.set()
     elif message.text == "Создать категорию":
-        if len(await db.get_user_categories()) < 5:
+        user_categories = await db.get_user_categories()
+        if user_categories is None or len(user_categories) < 5:
             await bot.send_message(message.from_user.id, "Введите название категории",
                                    reply_markup=KeyBoard.back_to_menu_kb)
             await StatesOfMenu.add_new_category_interring_name_of_category.set()
@@ -101,10 +137,13 @@ async def categories_choice(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id,
                                    "У вас ещё нет ни одной созданной кастомной категории для редактирования")
     elif message.text == "Вернуться в меню":
-        await state.finish()
-        await StatesOfMenu.menu.set()
+        StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        await clear_chat(message.chat.id, message.message_id)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
@@ -128,16 +167,18 @@ async def add_new_category(message: types.Message, state: FSMContext):
 @dp.message_handler(state=NewCategory.Waiting)
 async def back_to_menu_from_add_new_category(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
-        await state.finish()
         await StatesOfMenu.menu.set()
+        data = await state.get_data()
+        message_id = data['message_id']
+        for i in range(message.message_id - message_id + 1):
+            await bot.delete_message(message.from_user.id, message_id + i)
+        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        await clear_chat(message.chat.id, message.message_id)
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)
 async def back_to_menu(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
-        await state.finish()
         await StatesOfMenu.menu.set()
         data_state = await state.get_data()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)

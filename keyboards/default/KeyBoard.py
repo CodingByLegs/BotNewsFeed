@@ -16,8 +16,11 @@ button8 = types.KeyboardButton('Сутки')
 button9 = types.KeyboardButton('Три дня')
 button10 = types.KeyboardButton('Неделя')
 button11 = types.KeyboardButton('Месяц')
-button12 = types.KeyboardButton('Вернуться в меню')
-period_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button8, button9).row(button10, button11).add(button12)
+period_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button8, button9).row(button10, button11)
 
 button13 = types.KeyboardButton('Вернуться в меню')
 back_to_menu_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).add(button13)
+
+button14 = types.KeyboardButton('Задать переодичность отображения новостей')
+button15 = types.KeyboardButton('Вернуться в меню')
+news_feed_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button14, button15)
