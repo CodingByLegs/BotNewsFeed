@@ -6,6 +6,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from Parser import dump_all_messages
+from handlers.users.GlebHandlers import clear_chat
+from keyboards.default import KeyBoard
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb
 from states.States import NewsFeedStates, StatesOfMenu
 from keyboards.inline.callback_dates import channel_callback, page_callback, action_callback, delete_channel_callback
@@ -35,9 +37,10 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
     elif link.startswith("t.me/"):
         channel_name = link.partition("t.me/")[2]
     else:
-        pass  # если не ссылка
+        channel_name = " "
+    # если не ссылка
     # проверка на наличие такого канала
-    exception = await dump_all_messages(channel_name)
+    exception = await dump_all_messages(link)
     if exception:
         await bot.send_message(message.chat.id, "Такого канала не существует или он закрытый")
         await bot.delete_message(message.chat.id, message.message_id - 1)
@@ -59,6 +62,20 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
                                             message_id=message_id,
                                             reply_markup=await refresh_list_of_feed_channels_kb(page))
     await StatesOfMenu.list_of_feed_channels.set()
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=NewsFeedStates.wait_link)
+async def not_link_add_channel(message: Message, state: FSMContext):
+    if message.text == "Вернуться в меню":
+        await state.finish()
+        await StatesOfMenu.menu.set()
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id)
+    else:
+        await bot.send_message(message.chat.id, "Это не похоже на ссылку!")
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
 
 
 # перелистывание списка каналов новстной ленты "вперед"
