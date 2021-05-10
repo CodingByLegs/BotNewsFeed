@@ -65,7 +65,7 @@ async def menu_choice(message: types.Message, state: FSMContext):
             # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
             date_to_send = from_int_time_to_str(news_date.hour, news_date.minute) + '\n'
             news_message: str = date_to_send + news['message']
-            await bot.send_message(message.chat.id, news_message)
+            await bot.send_message(message.chat.id, news_message, disable_notification=True)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
@@ -102,6 +102,7 @@ async def categories_choice(message: types.Message, state: FSMContext):
         await state.finish()
         await StatesOfMenu.menu.set()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id)
     else:
         await bot.send_message(message.from_user.id, "Нажми на клавиатуру или напиши /info для вызова подсказки")
         return
@@ -128,6 +129,7 @@ async def back_to_menu_from_add_new_category(message: types.Message, state: FSMC
         await state.finish()
         await StatesOfMenu.menu.set()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id)
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)
@@ -136,6 +138,7 @@ async def back_to_menu(message: types.Message, state: FSMContext):
         await state.finish()
         await StatesOfMenu.menu.set()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id)
         # await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
 
 
@@ -147,3 +150,10 @@ async def get_text_messages(message: types.Message):
         await bot.send_message(message.from_user.id, "Напиши привет")
     else:
         await bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
+
+
+async def clear_chat(chat_id, last_message_id):
+    message_id = last_message_id
+    while await bot.delete_message(chat_id, message_id):
+        message_id -= 1
+
