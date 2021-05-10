@@ -125,7 +125,7 @@ async def dump_news(category_name=None):
     else:
         channels: list = await db.get_news_channels()
 
-    if channels is not None:
+    if channels is not None and len(channels):
         count_of_channels = len(channels)
         dot_json_str = '.json'
         path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''

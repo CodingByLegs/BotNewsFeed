@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 from keyboards.default import KeyBoard
 from keyboards.inline import InlineKeyBoard
 from states.States import StatesOfMenu, NewCategory
-from utils.MyDataJSON import MyDataJSON
+from utils.MyDataJSON import MyDataJSON, from_int_time_to_str
 from utils.db_api.dp_api import db
 
 
@@ -57,10 +57,13 @@ async def menu_choice(message: types.Message, state: FSMContext):
         lost_news = news_feed_messages[news_feed_messages_length - 1]['lost_news']
         news_feed_messages.pop(news_feed_messages_length - 1)
         print(lost_news)
+        if lost_news == -1:
+            await bot.send_message(message.chat.id, "У вас пока нет каналов в новостной ленте!\n"
+                                                    "Перейдите в \"Список каналов ленты\", чтобы добавить каналы")
         for news in news_feed_messages:
             news_date = MyDataJSON(news['date']).date
             # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
-            date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
+            date_to_send = from_int_time_to_str(news_date.hour, news_date.minute) + '\n'
             news_message: str = date_to_send + news['message']
             await bot.send_message(message.chat.id, news_message)
     else:
