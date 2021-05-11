@@ -6,7 +6,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from keyboards.default import KeyBoard
 from keyboards.inline import InlineKeyBoard
-from states.States import StatesOfMenu, NewCategory
+from states.States import StatesOfMenu, NewCategory, EditingCategory
 from utils.MyDataJSON import MyDataJSON, from_int_time_to_str
 from utils.db_api.dp_api import db
 
@@ -167,6 +167,15 @@ async def back_to_menu_from_add_new_category(message: types.Message, state: FSMC
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)
+async def back_to_menu(message: types.Message, state: FSMContext):
+    if message.text == "Вернуться в меню":
+        await StatesOfMenu.menu.set()
+        data_state = await state.get_data()
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)  # удаление лишних сообщений
+
+
+@dp.message_handler(state=EditingCategory.all_states)
 async def back_to_menu(message: types.Message, state: FSMContext):
     if message.text == "Вернуться в меню":
         await StatesOfMenu.menu.set()

@@ -5,6 +5,9 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from Parser import dump_all_messages
+from handlers.users.GlebHandlers import clear_chat
+from keyboards.default import KeyBoard
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb, \
     refresh_creation_of_categories_kb, create_list_of_channels_of_category_kb, refresh_list_of_channels_of_category_kb, \
     delete_channel_or_category_kb, create_editing_category_kb
@@ -28,6 +31,7 @@ async def editing_category(call: CallbackQuery, callback_data: dict, state: FSMC
     text_message2 = f'''Список каналов категории \"{category_name}\":'''
     await call.message.answer(text_message1)
     await call.message.answer(text_message2, reply_markup=await create_list_of_channels_of_category_kb(category_name))
+    await state.update_data(last_message_id_to_delete=call.message.message_id+2)
     await EditingCategory.editing_category.set()
 
 
@@ -51,22 +55,64 @@ async def add_new_channel(message: Message, state: FSMContext):
     elif link.startswith("t.me/"):
         channel_name = link.partition("t.me/")[2]
     else:
-        pass
+        channel_name = " "
     state_data = await state.get_data()
-    await db.add_channel_to_category(channel_name, state_data['category_name'])
-    await message.answer("Канал был добавлен!")
-    await bot.delete_message(message.chat.id, message.message_id - 1)
-    await bot.delete_message(message.chat.id, message.message_id)
-    await asyncio.sleep(2)
-    await bot.delete_message(message.chat.id, message.message_id + 1)
-    message_id = state_data['message_id']
-    page = state_data['page']
-    chat_id = state_data['chat_id']
-    category_name = state_data['category_name']
-    await bot.edit_message_reply_markup(chat_id=chat_id,
-                                        message_id=message_id,
-                                        reply_markup=await refresh_list_of_channels_of_category_kb(category_name, page))
+    exception = await dump_all_messages(link)
+    if exception:
+        await bot.send_message(message.chat.id, "Такого канала не существует или он закрытый")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+    else:
+        await db.add_channel_to_category(channel_name, state_data['category_name'])
+        await message.answer("Канал был добавлен!")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+        message_id = state_data['message_id']
+        page = state_data['page']
+        chat_id = state_data['chat_id']
+        category_name = state_data['category_name']
+        await bot.edit_message_reply_markup(chat_id=chat_id,
+                                            message_id=message_id,
+                                            reply_markup=await refresh_list_of_channels_of_category_kb(category_name, page))
     await EditingCategory.editing_category.set()
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=EditingCategory.wait_link)
+async def not_link_add_channel(message: Message, state: FSMContext):
+    if message.text == "Вернуться в меню":
+        await state.finish()
+        await StatesOfMenu.menu.set()
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
+    else:
+        await bot.send_message(message.chat.id, "Это не похоже на ссылку!")
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+        await StatesOfMenu.editing_category.set()
+
+
+# назад в меню
+@dp.callback_query_handler(action_callback.filter(action_name="back"), state=StatesOfMenu.editing_category)
+async def back_from_editing_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    await state.update_data(last_message_id_to_delete=call.message.message_id)
+    await bot.send_message(call.message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+    await clear_chat(call.message.chat.id, call.message.message_id, state)
+
+
+@dp.callback_query_handler(action_callback_with_category.filter(action_name="back"),
+                           state=EditingCategory.editing_category)
+async def back_from_editing_category_channels(call: CallbackQuery, state: FSMContext):
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await bot.delete_message(call.message.chat.id, call.message.message_id - 1)
+    state_data = await state.get_data()
+    await state.update_data(last_message_id_to_delete=state_data['message_id_main_inline'])  # чтобы все нормально удалялось
+    await StatesOfMenu.editing_category.set()  # по нажатию на кнопку "Вернуться в меню"
 
 
 @dp.callback_query_handler(page_callback_with_category.filter(rotation="forward"), state=StatesOfMenu.editing_category)
@@ -87,6 +133,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
 async def accept_deleting_channel(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await call.answer(cache_time=5)
     await state.update_data(message_id=call.message.message_id)
+    await state.update_data(last_message_id_to_delete=call.message.message_id)
     channel_name = callback_data.get("channel_name")
     category_name = callback_data.get("category_name")
     page = callback_data.get("page")
@@ -107,9 +154,11 @@ async def accept_deleting_category(call: CallbackQuery, callback_data: dict, sta
         await bot.edit_message_reply_markup(chat_id=call.message.chat.id,
                                             message_id=main_inline_message_id,
                                             reply_markup=await create_editing_category_kb())
+        await bot.delete_message(call.message.chat.id, call.message.message_id - 2)
+        await bot.delete_message(call.message.chat.id, call.message.message_id - 1)
         await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(call.message.chat.id, "Категория удалена!")
-        await sleep(2)
+        await sleep(1)
         await bot.delete_message(call.message.chat.id, call.message.message_id + 1)
     else:
         await bot.delete_message(call.message.chat.id, call.message.message_id)

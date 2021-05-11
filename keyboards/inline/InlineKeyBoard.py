@@ -165,10 +165,13 @@ async def refresh_creation_of_categories_kb(page: int, category_name: str):
 async def create_editing_category_kb():
     custom_categories: list = await db.get_user_categories()
     editing_category_choice_kb = InlineKeyboardMarkup(row_width=1)
-    for category in custom_categories:
-        inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
-        editing_category_choice_kb.insert(inline_button)
-    editing_category_choice_kb.add(InlineKeyboardButton(text="Назад", callback_data="back"))
+    if custom_categories is not None:
+        for category in custom_categories:
+            inline_button = InlineKeyboardButton(text=category, callback_data=category_callback.new(category_name=category))
+            editing_category_choice_kb.insert(inline_button)
+        editing_category_choice_kb.add(InlineKeyboardButton(text="Назад",
+                                                            callback_data=action_callback.new(action_name="back",
+                                                                                              page=0)))
     return editing_category_choice_kb
 
 
@@ -205,7 +208,10 @@ async def create_list_of_channels_of_category_kb(category_name: str):
     list_of_channels_of_category.add(InlineKeyboardButton(text="Удалить категорию", callback_data=
                                                           delete_category_callback.new(category_name=category_name)))
     list_of_channels_of_category.add(InlineKeyboardButton(text="Назад", callback_data=
-                                                          delete_category_callback.new(category_name=category_name)))
+                                                          action_callback_with_category.new(action_name="back",
+                                                                                            page=0,
+                                                                                            category_name=category_name)
+                                                          ))
     return list_of_channels_of_category
 
 
@@ -247,6 +253,11 @@ async def refresh_list_of_channels_of_category_kb(category_name: str, page: int)
     list_of_channels_of_category.add(InlineKeyboardButton(text="Удалить категорию",
                                                           callback_data=delete_category_callback.new(
                                                               category_name=category_name)))
+    list_of_channels_of_category.add(InlineKeyboardButton(text="Назад", callback_data=
+                                                          action_callback_with_category.new(action_name="back",
+                                                                                            page=0,
+                                                                                            category_name=category_name)
+                                                          ))
 
     return list_of_channels_of_category
 
