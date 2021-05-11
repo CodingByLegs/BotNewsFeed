@@ -52,12 +52,13 @@ async def menu_choice(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, "Список каналов ленты:",
                                reply_markup=await InlineKeyBoard.create_list_of_feed_channels_kb())
         await StatesOfMenu.list_of_feed_channels.set()
-    elif message.text == "Вывести новостную ленту":
+    elif message.text == "Вывести новостную ленту" or message.text == "Показать еще":
         news_feed_messages: list = await dump_news()
         news_feed_messages_length = len(news_feed_messages)
         lost_news = news_feed_messages[news_feed_messages_length - 1]['lost_news']
         news_feed_messages.pop(news_feed_messages_length - 1)
         print(lost_news)
+        flag = True
         if lost_news == -1:
             await bot.send_message(message.chat.id, "У вас пока нет каналов в новостной ленте!\n"
                                                     "Перейдите в \"Список каналов ленты\", чтобы добавить каналы")
@@ -67,7 +68,12 @@ async def menu_choice(message: types.Message, state: FSMContext):
             date_to_send = from_int_time_to_str(news_date.hour, news_date.minute) + '\n'
             channel_name = news['channel_name'] + '\n'
             news_message: str = date_to_send + channel_name + news['message']
-            await bot.send_message(message.chat.id, news_message, reply_markup=KeyBoard.news_feed_kb, disable_notification=True)
+            if flag:  # чтобы клавиатура выводилась только один раз
+                await bot.send_message(message.chat.id, news_message, reply_markup=KeyBoard.news_feed_kb,
+                                       disable_notification=True)
+                flag = False
+            else:
+                await bot.send_message(message.chat.id, news_message, disable_notification=True)
     elif message.text == "Задать переодичность отображения новостей":
         await bot.send_message(message.from_user.id, "Выберите переодичность отображения новостей:", reply_markup=KeyBoard.period_kb)
         await StatesOfMenu.period.set()
@@ -210,4 +216,6 @@ async def clear_chat(chat_id, current_last_message_id, state: FSMContext):
         message_id = current_last_message_id
     while await bot.delete_message(chat_id, message_id):  # удаляем цепочку сообщений, пока не дойдем до такого,
         message_id -= 1  # которого не существует, тогда при попытке его удалить функция вернет False и выйдем из цикла
+    await bot.delete_message(chat_id, message_id)  # удаляеи сообщение пользователя, нужен на те случаи, когда удаление
+    # началось с inline сообщения
 

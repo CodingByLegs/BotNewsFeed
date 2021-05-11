@@ -22,5 +22,6 @@ button13 = types.KeyboardButton('Вернуться в меню')
 back_to_menu_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).add(button13)
 
 button14 = types.KeyboardButton('Задать переодичность отображения новостей')
-button15 = types.KeyboardButton('Вернуться в меню')
-news_feed_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button14, button15)
+button15 = types.KeyboardButton('Показать еще')
+button16 = types.KeyboardButton('Вернуться в меню')
+news_feed_kb = types.ReplyKeyboardMarkup(resize_keyboard=True).row(button14, button15, button16)
