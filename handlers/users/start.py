@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher import FSMContext
 
 import json
-from Parser import parseURL, dump_all_messages, dump_news_feed
+from Parser import parseURL, dump_all_messages, dump_news
 from states.States import Form, Test
 from loader import client
 from loader import bot
@@ -21,9 +21,8 @@ async def send_welcome(message: types.Message, state: FSMContext):
     timzone = pytz.timezone('Europe/Moscow')
     period = timedelta(minutes=1440)
     date_period: datetime = datetime.utcnow() - period
-
-    messages = client.iter_messages(entity="https://t.me/csgomajor", limit=10, offset_date=date_period)
-
+    x = 10
+    messages = client.iter_messages(entity="https://t.me/csgomajor1", limit=10, offset_date=date_period)
     all_messages = []
     class DateTimeEncoder(json.JSONEncoder):
         def default(self, o):
@@ -32,14 +31,19 @@ async def send_welcome(message: types.Message, state: FSMContext):
             if isinstance(o, bytes):
                 return list(o)
             return json.JSONEncoder.default(self, o)
-
-    async for message in messages:
-        if message.text != "":
-            new_message = {'message': message.text,
-                           'date': message.date,
-                           'message_id': message.id,
-                           'current': 'false'}
-            all_messages.append(new_message)
+    try:
+        print(x)
+        async for message in messages:
+            if message.text != "":
+                new_message = {'message': message.text,
+                               'date': message.date,
+                               'message_id': message.id,
+                               'current': 'false'}
+                all_messages.append(new_message)
+        print(x + 1)
+    except Exception as e:
+        print(x - 1)
+        print(e)
     with open('channel_messages.json', 'w', encoding='utf8') as outfile:
         json.dump(all_messages, outfile, ensure_ascii=False, cls=DateTimeEncoder, indent=4)
     await state.finish()
@@ -47,11 +51,15 @@ async def send_welcome(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands=['Лента'], state=None)
 async def show_news_feed(message: types.Message):
-    news_feed_messages: list = await dump_news_feed()
+    news_feed_messages: list = await dump_news()
+    news_feed_messages_length = len(news_feed_messages)
+    lost_news = news_feed_messages[news_feed_messages_length - 1]['lost_news']
+    news_feed_messages.pop(news_feed_messages_length - 1)
+    print(lost_news)
     for news in news_feed_messages:
         news_date = MyDataJSON(news['date']).date
-        date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.min}\n'''
-        # date_to_send = f'''{news_date.day}.{news_date.month}\n{news_date.hour}:{news_date.min}\n'''
+        # date_to_send = f'''{news_date.day}.{news_date.month} {news_date.hour}:{news_date.minute}\n'''
+        date_to_send = f'''{news_date.hour}:{news_date.minute}\n'''
         news_message: str = date_to_send + news['message']
         await bot.send_message(message.chat.id, news_message)
 
@@ -70,14 +78,33 @@ async def removeState(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=Form.parse, content_types=types.ContentTypes.TEXT)
 async def parsing(message: types.Message, state: FSMContext):
-    url = message.text
-    await dump_all_messages(url)
+    channel = message.text
+    if channel.startswith("https://t.me/"):
+        channel_name = channel.partition("https://t.me/")[2]
+    elif channel.startswith("t.me/"):
+        channel_name = channel.partition("t.me/")[2]
+    else:
+        channel_name = " "
+    # await dump_all_messages(url)
+    x = 10
+    date = MyDataJSON("2021-05-07T16:18:00+00:00")
+    date = date.date
+    try:
+        print(x)
+        message_from_channel = client.iter_messages(entity=channel, limit=10, offset_date=date )
+        print(x + 1)
+    except Exception as e:
+        print(x - 1)
+        x -= 1
+    print(x)
+
+
     await state.update_data(message_id=message.chat.id)
-    print(message.chat.id)
+    #print(message.chat.id)
     await Form.next()
     tmp = await state.get_data()
-    print(tmp['message_id'])
-    await loading(state)
+    # print(tmp['message_id'])
+   # await loading(state)
 
 
 @dp.message_handler(commands=['Канал'], state=None)
@@ -249,12 +276,14 @@ async def getChannelsOurCategory(message: types.Message, state:FSMContext):
     await bot.send_message(message.chat.id, text)
 
 async def loading(state: FSMContext):
+    state_data = state.get_data()
+    channel_name = state_data['channel_name']
     with open('channel_messages.json', 'r', encoding='utf-8') as json_file:
         json_data = json.load(json_file)
 
         message_chid = await state.get_data()
-    for i in range(len(json_data)):
-        await bot.send_message(message_chid['message_id'], json_data[i]['message'])
+    # for i in range(len(json_data)):
+    #     await bot.send_message(message_chid['message_id'], json_data[i]['message'])
     await state.finish()
 
 

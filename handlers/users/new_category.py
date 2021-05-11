@@ -5,6 +5,9 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from Parser import dump_all_messages
+from handlers.users.GlebHandlers import clear_chat
+from keyboards.default import KeyBoard
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb,\
     refresh_creation_of_categories_kb
 from states.States import NewsFeedStates, StatesOfMenu, NewCategory
@@ -24,6 +27,7 @@ async def get_link(call: CallbackQuery, state: FSMContext, callback_data: dict):
                             page=callback_data.get("page"),
                             name_of_category=callback_data.get("name_of_channel"),
                             chat_id=call.message.chat.id)
+    await state.update_data(last_message_id_to_delete=call.message.message_id)
     await NewCategory.add_new_category_interring_name_of_channel.set()
 
 
@@ -35,22 +39,45 @@ async def add_channel(message: Message, state: FSMContext):
     elif link.startswith("t.me/"):
         channel_name = link.partition("t.me/")[2]
     else:
-        pass
+        channel_name = " "
+    exception = await dump_all_messages(link)
     state_data = await state.get_data()
-    await db.add_channel_to_category(channel_name, category_name=state_data['name_of_category'])
-    await message.answer("Канал был добавлен!")
-    await bot.delete_message(message.chat.id, message.message_id - 1)
-    await bot.delete_message(message.chat.id, message.message_id)
-    await asyncio.sleep(2)
-    await bot.delete_message(message.chat.id, message.message_id + 1)
-    message_id = state_data['message_id']
-    chat_id = state_data['chat_id']
-    page = state_data['page']
-    await bot.edit_message_reply_markup(
-        chat_id=chat_id,
-        message_id=message_id,
-        reply_markup=await refresh_creation_of_categories_kb(page, state_data['name_of_category']))
+    if exception:
+        await bot.send_message(message.chat.id, "Такого канала не существует или он закрытый")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+    else:
+        await db.add_channel_to_category(channel_name, category_name=state_data['name_of_category'])
+        await message.answer("Канал был добавлен!")
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await asyncio.sleep(2)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+        message_id = state_data['message_id']
+        chat_id = state_data['chat_id']
+        page = state_data['page']
+        await bot.edit_message_reply_markup(
+            chat_id=chat_id,
+            message_id=message_id,
+            reply_markup=await refresh_creation_of_categories_kb(page, state_data['name_of_category']))
     await NewCategory.Waiting.set()
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=NewCategory.add_new_category_interring_name_of_channel)
+async def not_link_add_channel(message: Message, state: FSMContext):
+    if message.text == "Вернуться в меню":
+        await StatesOfMenu.menu.set()
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
+    else:
+        await bot.send_message(message.chat.id, "Это не похоже на ссылку!")
+        await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id - 1)
+        await bot.delete_message(message.chat.id, message.message_id)
+        await bot.delete_message(message.chat.id, message.message_id + 1)
+        await NewCategory.Waiting.set()
 
 
 @dp.callback_query_handler(page_callback.filter(rotation="forward"), state=NewCategory.Waiting)

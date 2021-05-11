@@ -145,16 +145,16 @@ async def categories_choice(message: types.Message, state: FSMContext):
 @dp.message_handler(state=StatesOfMenu.add_new_category_interring_name_of_category)
 async def add_new_category(message: types.Message, state: FSMContext):
     category_name = message.text
-    await db.add_new_category(category_name)
-    text_message = f'''Список каналов категории \"{category_name}\":'''
-    await bot.send_message(message.from_user.id, text_message,
-                           reply_markup=await InlineKeyBoard.create_creation_of_categories_kb(category_name))
-    await NewCategory.Waiting.set()
-    # if message.text == "Вернуться в меню":
-    #     await state.finish()
-    #     await StatesOfMenu.menu.set()
-    #     await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-    #     await bot.delete_message(message.chat.id, message.message_id) удаление лишних сообщений
+    if category_name == "Вернуться в меню":
+        await StatesOfMenu.menu.set()
+        await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
+    else:
+        await db.add_new_category(category_name)
+        text_message = f'''Список каналов категории \"{category_name}\":'''
+        await bot.send_message(message.from_user.id, text_message,
+                               reply_markup=await InlineKeyBoard.create_creation_of_categories_kb(category_name))
+        await NewCategory.Waiting.set()
 
 
 @dp.message_handler(state=NewCategory.Waiting)
