@@ -73,7 +73,6 @@ async def menu_choice(message: types.Message, state: FSMContext):
         await StatesOfMenu.period.set()
     elif message.text == "Вернуться в меню":
         await StatesOfMenu.menu.set()
-        await state.update_data(last_message_id_to_delete=-1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
         await clear_chat(message.chat.id, message.message_id, state)
     else:
@@ -163,11 +162,8 @@ async def back_to_menu_from_add_new_category(message: types.Message, state: FSMC
     if message.text == "Вернуться в меню":
         await StatesOfMenu.menu.set()
         data = await state.get_data()
-        message_id = data['message_id']
-        for i in range(message.message_id - message_id + 1):
-            await bot.delete_message(message.from_user.id, message_id + i)
-        await state.update_data(message_id=message.message_id + 1)
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+        await clear_chat(message.chat.id, message.message_id, state)
 
 
 @dp.message_handler(state=StatesOfMenu.all_states)

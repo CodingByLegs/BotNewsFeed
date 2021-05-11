@@ -203,7 +203,9 @@ async def create_list_of_channels_of_category_kb(category_name: str):
                                                                                 category_name=category_name))
     list_of_channels_of_category.add(button_add_channel)
     list_of_channels_of_category.add(InlineKeyboardButton(text="Удалить категорию", callback_data=
-    delete_category_callback.new(category_name=category_name)))
+                                                          delete_category_callback.new(category_name=category_name)))
+    list_of_channels_of_category.add(InlineKeyboardButton(text="Назад", callback_data=
+                                                          delete_category_callback.new(category_name=category_name)))
     return list_of_channels_of_category
 
 
@@ -244,7 +246,7 @@ async def refresh_list_of_channels_of_category_kb(category_name: str, page: int)
     list_of_channels_of_category.add(button_add_channel)
     list_of_channels_of_category.add(InlineKeyboardButton(text="Удалить категорию",
                                                           callback_data=delete_category_callback.new(
-                                                                        category_name=category_name)))
+                                                              category_name=category_name)))
 
     return list_of_channels_of_category
 

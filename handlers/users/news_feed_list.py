@@ -45,7 +45,7 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
     if exception:
         await bot.send_message(message.chat.id, "Такого канала не существует или он закрытый")
         await bot.delete_message(message.chat.id, message.message_id - 1)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await bot.delete_message(message.chat.id, message.message_id)
         await bot.delete_message(message.chat.id, message.message_id + 1)
     else:
@@ -53,7 +53,7 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
         await message.answer("Канал был добавлен!")
         await bot.delete_message(message.chat.id, message.message_id - 1)
         await bot.delete_message(message.chat.id, message.message_id)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await bot.delete_message(message.chat.id, message.message_id + 1)  # удаление последнего отправленного сообщения
         state_data = await state.get_data()  # обновление инлайн клавиатуры
         message_id = state_data['message_id']
@@ -68,15 +68,16 @@ async def add_channel_to_news_feed(message: Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=NewsFeedStates.wait_link)
 async def not_link_add_channel(message: Message, state: FSMContext):
     if message.text == "Вернуться в меню":
-        await state.finish()
         await StatesOfMenu.menu.set()
         await bot.send_message(message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
-        await clear_chat(message.chat.id, message.message_id)
+        await clear_chat(message.chat.id, message.message_id, state)
     else:
         await bot.send_message(message.chat.id, "Это не похоже на ссылку!")
         await asyncio.sleep(1)
+        await bot.delete_message(message.chat.id, message.message_id - 1)
         await bot.delete_message(message.chat.id, message.message_id)
         await bot.delete_message(message.chat.id, message.message_id + 1)
+        await StatesOfMenu.list_of_feed_channels.set()
 
 
 # перелистывание списка каналов новстной ленты "вперед"
@@ -95,7 +96,7 @@ async def show_next_channels_page(call: CallbackQuery, callback_data: dict):
 # call_back для нажатия по каналу
 @dp.callback_query_handler(channel_callback.filter(), state=StatesOfMenu.list_of_feed_channels)
 async def show_next_channels_page(call: CallbackQuery, callback_data: dict, state: FSMContext):
-    await call.answer(cache_time=5)
+    await call.answer(cache_time=3)
     await state.update_data(message_id=call.message.message_id)  # запоминаем id inline сообщения со спсиком каналов
     channel_name = callback_data.get("channel_name")
     page = callback_data.get("page")
@@ -120,7 +121,7 @@ async def delete_channel(call: CallbackQuery, callback_data: dict, state: FSMCon
                                             reply_markup=await refresh_list_of_feed_channels_kb(page))
         await bot.delete_message(call.message.chat.id, call.message.message_id)
         await bot.send_message(call.message.chat.id, "Канал удален!")
-        await sleep(2)
+        await sleep(1)
         await bot.delete_message(call.message.chat.id, call.message.message_id + 1)
     else:
         await bot.delete_message(call.message.chat.id, call.message.message_id)
