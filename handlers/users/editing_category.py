@@ -101,7 +101,7 @@ async def not_link_add_channel(message: Message, state: FSMContext):
 @dp.callback_query_handler(action_callback.filter(action_name="back"), state=StatesOfMenu.editing_category)
 async def back_from_editing_category(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await state.update_data(last_message_id_to_delete=call.message.message_id)
-    await bot.send_message(call.message.from_user.id, "Меню:", reply_markup=KeyBoard.start_kb)
+    await bot.send_message(call.message.chat.id, "Меню:", reply_markup=KeyBoard.start_kb)
     await clear_chat(call.message.chat.id, call.message.message_id, state)
 
 
