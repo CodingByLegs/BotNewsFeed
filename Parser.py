@@ -166,7 +166,8 @@ async def dump_news(category_name=None):
                 json_data_length = len(json_data)
                 i = json_data_length - 1
                 message_read = 0
-                # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо, пока не дойдем до конца файла
+                # читаем сообщения из файла пока не прочитаем news_from_one_channel раз либо,
+                # пока не дойдем до конца файла
                 while i > -1 and json_data_length - 1 - i != news_from_one_channel:
                     news = dict(message=json_data[i]['message'],
                                 date=json_data[i]['date'],
