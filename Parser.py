@@ -21,6 +21,7 @@ from utils.db_api.dp_api import db
 async def dump_all_messages(channel):
     """Записывает json-файл с информацией о всех сообщениях канала/чата"""
     will_parse_flag = True
+    our_categories_flag = False
     timzone = pytz.timezone('Europe/Moscow')
     # тк datetime.now() возвращает еще и микросекунды, а в json файле их нет, приходится делать так
     date_now = datetime(year=datetime.now(tz=timzone).year, month=datetime.now(tz=timzone).month,
@@ -34,15 +35,24 @@ async def dump_all_messages(channel):
         channel_name = channel.partition("t.me/")[2]
     else:
         channel_name = " "
-    # создаем директорию для поиска json файлов пользователя
-    path_json_user_channels = f'''jsonfiles/{user_id}'''
+    our_categories = await db.get_our_categories()
+    for category in our_categories:
+        our_category_channels: list = await db.get_our_category_channels(category)
+        if our_category_channels.count(channel_name):
+            path_json_user_channels = f'''jsonfiles/our_categories/{category}'''
+            path_channel_name = f'''channel_messages_{channel_name}.json'''
+            our_categories_flag = True
+            break
+    if not our_categories_flag:
+        # создаем директорию для поиска json файлов пользователя
+        path_json_user_channels = f'''jsonfiles/{user_id}'''
+        # создаем путь к каналу, которой будем парсить
+        path_channel_name = f'''channel_messages_{channel_name}.json'''
     # получаем список файлов этой директории
     list_of_user_channels: list = os.listdir(path_json_user_channels)
-    # создаем путь к каналу, которой будем парсить
-    path_channel_name = f'''channel_messages_{channel_name}.json'''
     # объединяем в общий путь к файлу с названием канала
     path_to_json_file = path_json_user_channels + '/' + path_channel_name
-    # ищем файл с названием канала в директории path_json_user_channels
+    # ищем файл с названием канала в директории path_json_user_channels\
     if list_of_user_channels.count(path_channel_name):
         will_parse_flag = False
         barrier_to_reparse_channel_count_messages = 4  # минимальное кол-во сообщений, чтобы репарсить канал
@@ -123,11 +133,13 @@ async def dump_all_messages(channel):
 async def dump_news(category_name=None):
     user = types.User.get_current()
     all_news: list = []
+    our_category_flag = False
     user_id = user.id
     lost_news = -1
     if category_name is not None:
         channels: list = await db.get_user_categories()
         if channels is not None and not channels.count(category_name):
+            our_category_flag = True
             channels: list = await db.get_our_category_channels(category_name)
         else:
             channels: list = await db.get_category_channels(category_name)
@@ -137,7 +149,10 @@ async def dump_news(category_name=None):
     if channels is not None and len(channels):
         count_of_channels = len(channels)
         dot_json_str = '.json'
-        path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
+        if our_category_flag:
+            path_to_user_directory = f'''jsonfiles/our_categories/{category_name}/channel_messages_'''
+        else:
+            path_to_user_directory = f'''jsonfiles/{user_id}/channel_messages_'''
         news_per_dump = 20  # кол-во сообщений для единоразовго отображения
         news_from_one_channel = math.trunc(news_per_dump / count_of_channels)  # округляем вниз
         lost_news = news_per_dump % news_from_one_channel  # если кол-во каналов пользователя не кратно 20 + защита,
