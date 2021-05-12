@@ -6,7 +6,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from Parser import dump_all_messages
-from handlers.users.GlebHandlers import clear_chat
+from handlers.users.start_menu import clear_chat
 from keyboards.default import KeyBoard
 from keyboards.inline.InlineKeyBoard import refresh_list_of_feed_channels_kb, delete_channel_from_news_feed_kb
 from states.States import NewsFeedStates, StatesOfMenu
